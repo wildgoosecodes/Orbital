@@ -6,6 +6,11 @@ import StatCard from './components/cards/StatCard';
 import TaskSummaryCard from './components/cards/TaskSummaryCard';
 import GoalProgressCard from './components/cards/GoalProgressCard';
 import VehicleStatusCard from './components/cards/VehicleStatusCard';
+import {
+  goalProgressData,
+  telemetryData,
+  vehicleStatusData,
+} from './data/mockDashboardData';
 
 // Mock live stream data simulating real-time vehicle OBD-II metrics
 interface DiagnosticMetric {
@@ -19,8 +24,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics' | 'terminal'>('overview');
   
   // State simulating dynamic engine telemetry
-  const [rpm, setRpm] = useState<number>(750);
-  const [coolantTemp, setCoolantTemp] = useState<number>(195);
+  const [rpm, setRpm] = useState<number>(telemetryData.initialRpm);
+  const [coolantTemp, setCoolantTemp] = useState<number>(telemetryData.initialCoolantTemp);
 
   // Simulate minimal background data fluctuation (engine idling)
   useEffect(() => {
@@ -34,8 +39,8 @@ export default function App() {
   const metrics: Record<string, DiagnosticMetric> = {
     rpm: { label: 'Engine RPM', value: rpm, unit: 'RPM', status: rpm > 3000 ? 'warning' : 'normal' },
     coolant: { label: 'Coolant Temp', value: coolantTemp, unit: '°F', status: coolantTemp > 220 ? 'critical' : 'normal' },
-    voltage: { label: 'Battery Voltage', value: 14.2, unit: 'V', status: 'normal' },
-    throttle: { label: 'Throttle Position', value: 12.4, unit: '%', status: 'normal' },
+    voltage: { label: 'Battery Voltage', value: telemetryData.batteryVoltage, unit: 'V', status: 'normal' },
+    throttle: { label: 'Throttle Position', value: telemetryData.throttlePosition, unit: '%', status: 'normal' },
   };
 
   return (
@@ -66,10 +71,12 @@ export default function App() {
             title="Hardware Connection Architecture"
             description="This interface acts as the presentation layer. Telemetry handles parsing raw micro-controller standard streams (serial/OBD lines) directly into JSON data blocks for real-time visualization."
           >
-            <GoalProgressCard title="Signal Integrity" progress={82} target="99% stable" />
-            <GoalProgressCard title="Packet Sync" progress={74} target="92% efficiency" />
-            <VehicleStatusCard title="Battery Health" detail="Voltage holding steady at 14.2V" status="normal" />
-            <VehicleStatusCard title="Coolant Load" detail="Temperature stable within safe range" status="warning" />
+            {goalProgressData.map((goal) => (
+              <GoalProgressCard key={goal.title} title={goal.title} progress={goal.progress} target={goal.target} />
+            ))}
+            {vehicleStatusData.map((item) => (
+              <VehicleStatusCard key={item.title} title={item.title} detail={item.detail} status={item.status} />
+            ))}
           </TaskSummaryCard>
         </div>
       )}
