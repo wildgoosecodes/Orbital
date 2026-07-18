@@ -1,3 +1,5 @@
+import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Repeat2, Target } from 'lucide-react';
+
 export type Tab = 'overview' | 'tasks' | 'habits' | 'goals' | 'analytics';
 
 interface SidebarProps {
@@ -5,11 +7,19 @@ interface SidebarProps {
   onTabChange: (tab: Tab) => void;
   open: boolean;
   onClose: () => void;
+  userEmail: string;
+  onSignOut: () => void;
 }
 
-const TABS: Tab[] = ['overview', 'tasks', 'habits', 'goals', 'analytics'];
+const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+  { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { tab: 'habits', label: 'Habits', icon: Repeat2 },
+  { tab: 'goals', label: 'Goals', icon: Target },
+  { tab: 'analytics', label: 'Analytics', icon: BarChart3 },
+];
 
-export default function Sidebar({ activeTab, onTabChange, open, onClose }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, open, onClose, userEmail, onSignOut }: SidebarProps) {
   const nav = (
     <>
       <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
@@ -17,21 +27,22 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose }: Sideb
         <h1 className="text-xl font-bold tracking-wider text-white uppercase">Orbital</h1>
       </div>
 
-      <nav className="p-4 space-y-2">
-        {TABS.map((tab) => (
+      <nav className="p-4 space-y-1">
+        {TABS.map(({ tab, label, icon: Icon }) => (
           <button
             key={tab}
             onClick={() => {
               onTabChange(tab);
               onClose();
             }}
-            className={`w-full text-left px-4 py-2.5 rounded-lg font-medium text-sm transition-all uppercase tracking-wider ${
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
               activeTab === tab
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                 : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
             }`}
           >
-            {tab}
+            <Icon size={18} strokeWidth={2} />
+            {label}
           </button>
         ))}
       </nav>
@@ -43,7 +54,7 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose }: Sideb
       {/* Desktop rail */}
       <aside className="hidden md:flex w-64 bg-slate-950 border-r border-slate-800 flex-col justify-between">
         <div>{nav}</div>
-        <SidebarFooter />
+        <ProfileCard userEmail={userEmail} onSignOut={onSignOut} />
       </aside>
 
       {/* Mobile drawer */}
@@ -54,22 +65,28 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose }: Sideb
         }`}
       >
         <div>{nav}</div>
-        <SidebarFooter />
+        <ProfileCard userEmail={userEmail} onSignOut={onSignOut} />
       </aside>
     </>
   );
 }
 
-function SidebarFooter() {
+function ProfileCard({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => void }) {
+  const initials = userEmail.slice(0, 2).toUpperCase();
+
   return (
-    <div className="p-4 border-t border-slate-800 bg-slate-950/50">
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span>Status:</span>
-        <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-          ONLINE
-        </span>
+    <div className="p-4 border-t border-slate-800 flex items-center gap-3">
+      <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
+        {initials}
       </div>
+      <p className="flex-1 min-w-0 text-xs text-slate-400 truncate">{userEmail}</p>
+      <button
+        onClick={onSignOut}
+        aria-label="Sign out"
+        className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-900 flex-shrink-0"
+      >
+        <LogOut size={16} strokeWidth={2} />
+      </button>
     </div>
   );
 }
