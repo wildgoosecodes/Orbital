@@ -33,6 +33,8 @@ export default function OverviewPage({ userId, userEmail, onNavigate }: Overview
   const { goals, loading: goalsLoading } = useGoals(userId);
   const { last7Days, loading: analyticsLoading } = useAnalytics(userId);
 
+  const goalTitleById = new Map(goals.map((g) => [g.id, g.title]));
+
   const openCount = countOpenTasks(tasks);
   const completedToday = last7Days.length > 0 ? last7Days[last7Days.length - 1].completed : 0;
   const productivityScore = weeklyProductivityScore(last7Days, openCount);
@@ -87,6 +89,7 @@ export default function OverviewPage({ userId, userEmail, onNavigate }: Overview
             loading={tasksLoading}
             onToggleDone={(id, status) => setStatus(id, status)}
             onNavigate={onNavigate}
+            goalTitleById={goalTitleById}
           />
         </div>
         <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />

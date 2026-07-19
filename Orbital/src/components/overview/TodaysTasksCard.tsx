@@ -1,4 +1,4 @@
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Milestone, Plus } from 'lucide-react';
 import type { Task, TaskStatus } from '../../types/database';
 import type { Tab } from '../layout/Sidebar';
 import { sortForOverview } from '../../lib/overviewStats';
@@ -8,6 +8,7 @@ interface TodaysTasksCardProps {
   loading: boolean;
   onToggleDone: (id: string, status: TaskStatus) => void;
   onNavigate: (tab: Tab) => void;
+  goalTitleById?: Map<string, string>;
 }
 
 const PRIORITY_STYLES: Record<Task['priority'], string> = {
@@ -16,7 +17,7 @@ const PRIORITY_STYLES: Record<Task['priority'], string> = {
   high: 'bg-rose-500/10 text-rose-400',
 };
 
-export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNavigate }: TodaysTasksCardProps) {
+export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNavigate, goalTitleById }: TodaysTasksCardProps) {
   const visible = sortForOverview(tasks).slice(0, 4);
 
   return (
@@ -46,6 +47,7 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
 
         {visible.map((task) => {
           const done = task.status === 'done';
+          const goalTitle = task.goal_id ? goalTitleById?.get(task.goal_id) : undefined;
           return (
             <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-lg">
               <button
@@ -77,6 +79,12 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
                     </span>
                   )}
                 </div>
+                {goalTitle && (
+                  <p className="mt-1 flex items-center gap-1 text-[11px] text-indigo-400/80 truncate">
+                    <Milestone size={11} className="flex-shrink-0" />
+                    {goalTitle}
+                  </p>
+                )}
               </div>
             </div>
           );

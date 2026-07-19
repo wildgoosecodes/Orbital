@@ -13,12 +13,18 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, and goals.
+const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, goals, and roadmaps.
 Be concise and conversational — this renders in a narrow chat panel, not a document.
 Use the tools to read the user's real data before answering questions about it; never guess at counts or status.
 When the user asks you to create, update, complete, or delete something, use the matching tool rather than just describing what you'd do.
 Dates are ISO strings (YYYY-MM-DD). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
 If a request is ambiguous (e.g. which task they mean among several similar ones), ask a short clarifying question instead of guessing.`;
+
+const ONBOARDING_SYSTEM_PROMPT = `You are Orbital, an AI assistant whose job is to turn a new user's year into a followable roadmap: one or more Year Goals, each broken into Milestones, each broken into smaller Goals, which later get broken into Tasks.
+This is the user's first conversation with you, right after signing up. Keep it short and warm — 2 to 5 conversational turns, not an interrogation. Ask one focused follow-up at a time (e.g. what's motivating this goal, or roughly when milestones should land) rather than a long list of questions.
+Once you have enough to work with (even a rough year goal is enough — don't demand excessive detail), use the tools to actually build the roadmap: call create_year_goal once, then create_milestone 2-4 times for that year goal (spaced sensibly across the year, using target_date), then create_goal 1-3 times per milestone for the first milestone or two (goals for later milestones can be added by the user later). Prefer fewer, meaningful milestones/goals over an exhaustive breakdown.
+After creating the roadmap, send a brief closing message confirming it's ready and that they can see and adjust it on the Roadmap tab. Do not ask the user to confirm every single milestone/goal title before creating them — propose a sensible plan and build it; they can edit anything afterward.
+Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, quarterly: 90, yearly: 365 };
 
@@ -35,7 +41,7 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: 'create_task',
-    description: 'Create a new task.',
+    description: 'Create a new task, optionally linked to a roadmap goal via goal_id.',
     input_schema: {
       type: 'object',
       properties: {
@@ -44,13 +50,14 @@ const tools: Anthropic.Tool[] = [
         priority: { type: 'string', enum: ['low', 'medium', 'high'] },
         due_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
         category: { type: 'string' },
+        goal_id: { type: 'string', description: 'Optional id of the roadmap goal this task ladders up to.' },
       },
       required: ['title'],
     },
   },
   {
     name: 'update_task',
-    description: "Update a task's status, title, priority, due date, category, or description.",
+    description: "Update a task's status, title, priority, due date, category, description, or linked goal.",
     input_schema: {
       type: 'object',
       properties: {
@@ -61,6 +68,7 @@ const tools: Anthropic.Tool[] = [
         priority: { type: 'string', enum: ['low', 'medium', 'high'] },
         due_date: { type: 'string' },
         category: { type: 'string' },
+        goal_id: { type: 'string' },
       },
       required: ['task_id'],
     },
@@ -106,17 +114,18 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: 'list_goals',
-    description: "List the user's goals.",
+    description: "List the user's goals (standalone and roadmap goals alike).",
     input_schema: { type: 'object', properties: {} },
   },
   {
     name: 'create_goal',
-    description: 'Create a new goal. The period start/end dates are computed automatically from period_type starting today.',
+    description: 'Create a new goal. The period start/end dates are computed automatically from period_type starting today. Pass milestone_id to place it under a roadmap milestone.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
         period_type: { type: 'string', enum: ['weekly', 'quarterly', 'yearly'] },
+        milestone_id: { type: 'string', description: 'Optional id of the milestone this goal belongs to.' },
       },
       required: ['title', 'period_type'],
     },
@@ -137,6 +146,39 @@ const tools: Anthropic.Tool[] = [
     name: 'delete_goal',
     description: 'Delete a goal permanently.',
     input_schema: { type: 'object', properties: { goal_id: { type: 'string' } }, required: ['goal_id'] },
+  },
+  {
+    name: 'list_roadmap',
+    description: "List the user's full roadmap: year goals with their nested milestones and goals.",
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'create_year_goal',
+    description: 'Create a top-level year goal — the root of a roadmap.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        year: { type: 'number' },
+      },
+      required: ['title', 'year'],
+    },
+  },
+  {
+    name: 'create_milestone',
+    description: 'Create a milestone under a year goal — a checkpoint on the way to it.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        year_goal_id: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        target_date: { type: 'string', description: 'ISO date YYYY-MM-DD this milestone should be reached by.' },
+        position: { type: 'number', description: 'Order along the roadmap timeline, 0-based.' },
+      },
+      required: ['year_goal_id', 'title'],
+    },
   },
 ];
 
@@ -159,6 +201,7 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           priority: input.priority ?? 'medium',
           due_date: input.due_date ?? null,
           category: input.category ?? null,
+          goal_id: input.goal_id ?? null,
         })
         .select()
         .single();
@@ -242,6 +285,7 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           period_type: periodType,
           period_start: start.toISOString().slice(0, 10),
           period_end: end.toISOString().slice(0, 10),
+          milestone_id: input.milestone_id ?? null,
         })
         .select()
         .single();
@@ -264,6 +308,65 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
       const { error } = await supabase.from('goals').delete().eq('id', input.goal_id as string);
       if (error) throw error;
       return { deleted: true };
+    }
+    case 'list_roadmap': {
+      const [yearGoalsRes, milestonesRes, goalsRes] = await Promise.all([
+        supabase.from('year_goals').select('*').order('created_at', { ascending: false }),
+        supabase.from('milestones').select('*').order('position', { ascending: true }),
+        supabase.from('goals').select('*').order('created_at', { ascending: false }),
+      ]);
+      if (yearGoalsRes.error) throw yearGoalsRes.error;
+      if (milestonesRes.error) throw milestonesRes.error;
+      if (goalsRes.error) throw goalsRes.error;
+
+      const goalsByMilestone = new Map<string, unknown[]>();
+      for (const goal of goalsRes.data) {
+        if (!goal.milestone_id) continue;
+        const list = goalsByMilestone.get(goal.milestone_id) || [];
+        list.push(goal);
+        goalsByMilestone.set(goal.milestone_id, list);
+      }
+      const milestonesByYearGoal = new Map<string, unknown[]>();
+      for (const milestone of milestonesRes.data) {
+        const withGoals = { ...milestone, goals: goalsByMilestone.get(milestone.id) || [] };
+        const list = milestonesByYearGoal.get(milestone.year_goal_id) || [];
+        list.push(withGoals);
+        milestonesByYearGoal.set(milestone.year_goal_id, list);
+      }
+      return yearGoalsRes.data.map((yg: { id: string }) => ({
+        ...yg,
+        milestones: milestonesByYearGoal.get(yg.id) || [],
+      }));
+    }
+    case 'create_year_goal': {
+      const { data, error } = await supabase
+        .from('year_goals')
+        .insert({
+          user_id: userId,
+          title: input.title,
+          description: input.description ?? null,
+          year: input.year,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+    case 'create_milestone': {
+      const { data, error } = await supabase
+        .from('milestones')
+        .insert({
+          user_id: userId,
+          year_goal_id: input.year_goal_id,
+          title: input.title,
+          description: input.description ?? null,
+          target_date: input.target_date ?? null,
+          position: input.position ?? 0,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
     }
     default:
       throw new Error(`Unknown tool: ${name}`);
@@ -294,7 +397,7 @@ Deno.serve(async (req) => {
     } = await supabase.auth.getUser();
     if (userError || !user) return json({ error: 'Unauthorized' }, 401);
 
-    const { messages } = await req.json();
+    const { messages, mode } = await req.json();
     if (!Array.isArray(messages) || messages.length === 0) {
       return json({ error: 'messages is required' }, 400);
     }
@@ -302,12 +405,13 @@ Deno.serve(async (req) => {
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
     const conversation: Anthropic.MessageParam[] = [...messages];
     const today = new Date().toISOString().slice(0, 10);
+    const systemPrompt = mode === 'onboarding' ? ONBOARDING_SYSTEM_PROMPT : SYSTEM_PROMPT;
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const response = await anthropic.messages.create({
         model: MODEL,
         max_tokens: 1024,
-        system: `${SYSTEM_PROMPT}\nToday's date is ${today}.`,
+        system: `${systemPrompt}\nToday's date is ${today}.`,
         tools,
         messages: conversation,
       });

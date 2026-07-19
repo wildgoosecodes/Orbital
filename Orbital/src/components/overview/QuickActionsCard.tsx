@@ -1,4 +1,4 @@
-import { BarChart3, CheckSquare, Repeat2, Target } from 'lucide-react';
+import { BarChart3, CheckSquare, Map, Repeat2 } from 'lucide-react';
 import type { Tab } from '../layout/Sidebar';
 
 interface QuickActionsCardProps {
@@ -8,7 +8,7 @@ interface QuickActionsCardProps {
 const ACTIONS: { label: string; tab: Tab; icon: typeof CheckSquare; color: string }[] = [
   { label: 'Add New Task', tab: 'tasks', icon: CheckSquare, color: '#6366f1' },
   { label: 'Log a Habit', tab: 'habits', icon: Repeat2, color: '#10b981' },
-  { label: 'Add New Goal', tab: 'goals', icon: Target, color: '#f59e0b' },
+  { label: 'View Roadmap', tab: 'roadmap', icon: Map, color: '#f59e0b' },
   { label: 'View Analytics', tab: 'analytics', icon: BarChart3, color: '#3987e5' },
 ];
 

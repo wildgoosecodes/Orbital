@@ -23,7 +23,7 @@ export default function GoalsProgressCard({ goals, loading, onNavigate }: GoalsP
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-300">Goals Progress</h3>
         <button
-          onClick={() => onNavigate('goals')}
+          onClick={() => onNavigate('roadmap')}
           className="text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1"
         >
           View all

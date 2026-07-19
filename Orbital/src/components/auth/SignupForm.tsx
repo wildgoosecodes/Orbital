@@ -22,7 +22,7 @@ export default function SignupForm() {
       return;
     }
     if (data.session) {
-      navigate('/');
+      navigate('/onboarding');
       return;
     }
     setSubmitted(true);

@@ -1,6 +1,6 @@
-import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Repeat2, Sparkles, Target } from 'lucide-react';
+import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
 
-export type Tab = 'overview' | 'tasks' | 'habits' | 'goals' | 'analytics' | 'assistant';
+export type Tab = 'overview' | 'tasks' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -15,7 +15,7 @@ const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: 
   { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
   { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },
-  { tab: 'goals', label: 'Goals', icon: Target },
+  { tab: 'roadmap', label: 'Roadmap', icon: Map },
   { tab: 'analytics', label: 'Analytics', icon: BarChart3 },
   // The assistant already lives in the persistent side panel on xl+ screens.
   { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },
