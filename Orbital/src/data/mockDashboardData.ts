@@ -34,6 +34,24 @@ export interface VehicleMetrics {
   engineTemperature: number;
 }
 
+export interface ProductivitySummaryCardData {
+  totalTasks: number;
+  completedTasks: number;
+  remainingTasks: number;
+  completionPercent: number;
+}
+
+export interface MonthlyGoalCardData {
+  title: string;
+  progress: number;
+  target: string;
+}
+
+export interface HotStreakCardData {
+  streakDays: number;
+  label: string;
+}
+
 export const weeklyProductivityData: WeeklyProductivityPoint[] = [
   { day: 'Mon', value: 72 },
   { day: 'Tue', value: 84 },
@@ -71,4 +89,22 @@ export const vehicleMetricsData: VehicleMetrics = {
   batteryVoltage: 14.2,
   fuelEconomy: 29.4,
   engineTemperature: 195,
+};
+
+export const taskTrackerData: ProductivitySummaryCardData = {
+  totalTasks: 32,
+  completedTasks: 24,
+  remainingTasks: 8,
+  completionPercent: 75,
+};
+
+export const monthlyGoalData: MonthlyGoalCardData = {
+  title: 'Monthly Vehicle Readiness Goal',
+  progress: 78,
+  target: '100% complete',
+};
+
+export const hotStreakData: HotStreakCardData = {
+  streakDays: 12,
+  label: 'consecutive check-ins',
 };

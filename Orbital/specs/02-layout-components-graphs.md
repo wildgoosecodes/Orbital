@@ -1,150 +1,342 @@
 # Orbital Feature Spec #002
 
-## Title
-Dashboard Layout Refactor & Graph Statistics
+# Title
+
+Dashboard Layout Refactor, Statistics & Mobile Experience
 
 ---
 
-## Goal
+# Goal
 
-Refactor the current MVP into a modular React application using reusable components.
+Refactor the current Orbital MVP into a modular React application using reusable components.
 
-App.tsx should become a composition file that imports reusable components rather than containing all dashboard code.
+App.tsx should primarily compose reusable components rather than containing dashboard implementation details.
 
----
+This feature establishes the foundation for the Orbital Dashboard across:
 
-## Objectives
-
-- Improve project organization.
-- Improve readability.
-- Prepare the application for future features.
-- Keep all current functionality.
-- Add dashboard statistics using Recharts.
+- Desktop
+- Tablet
+- Mobile
+- Future Car Display
 
 ---
 
-## Current Problems
+# Objectives
+
+- Improve project organization
+- Improve readability
+- Improve maintainability
+- Prepare the application for future features
+- Add dashboard statistics using Recharts
+- Improve the mobile experience
+- Keep all existing functionality
+
+---
+
+# Current Problems
 
 - App.tsx is too large.
 - Layout is difficult to modify.
 - Components are not reusable.
 - Dashboard statistics are missing.
+- Mobile view becomes compressed and difficult to use.
+- Desktop layout does not translate well to smaller screens.
 
 ---
 
-## Layout
+# Layout
 
-Dashboard should contain:
+## Desktop
 
-Sidebar
-Header
-Dashboard Grid
-Statistics Cards
-Graph Section
-AI Assistant Panel
+Layout:
 
-Desktop:
-Sidebar | Main Dashboard | AI Panel
+Sidebar | Dashboard | AI Assistant
 
-Tablet:
-Sidebar collapses.
-
-Mobile:
-Vertical layout.
+The desktop experience should display the complete dashboard.
 
 ---
 
-## Components
+## Tablet
 
-Create these folders if they don't exist.
+- Sidebar may collapse or become narrower.
+- Dashboard cards should resize appropriately.
+- Charts remain visible.
+- AI Assistant remains accessible.
 
+---
+
+## Mobile
+
+Do NOT compress the desktop dashboard into one long page.
+
+Instead, provide a mobile-first navigation experience using two primary views:
+
+- Overview
+- Agenda
+
+---
+
+# Components
+
+Organize components into reusable folders.
+
+```
 src/
-    components/
-        layout/
-            Sidebar.tsx
-            Header.tsx
-            DashboardLayout.tsx
 
-        cards/
-            StatCard.tsx
-            TaskSummaryCard.tsx
-            GoalProgressCard.tsx
-            VehicleStatusCard.tsx
+components/
 
-        charts/
-            WeeklyProgressChart.tsx
-            TaskBreakdownChart.tsx
-            VehicleHealthChart.tsx
+    layout/
+        Sidebar.tsx
+        Header.tsx
+        DashboardLayout.tsx
 
-        assistant/
-            AIAssistantPanel.tsx
+    navigation/
+        MobileNavigation.tsx
+
+    views/
+        OverviewView.tsx
+        AgendaView.tsx
+
+    cards/
+        StatCard.tsx
+        TaskSummaryCard.tsx
+        GoalProgressCard.tsx
+        VehicleStatusCard.tsx
+        MonthlyGoalCard.tsx
+        HotStreakCard.tsx
+
+    charts/
+        WeeklyProgressChart.tsx
+        TaskBreakdownChart.tsx
+        VehicleHealthChart.tsx
+
+    assistant/
+        AIAssistantPanel.tsx
+```
 
 ---
 
-## Data
+# Data
 
 Create
 
+```
 src/data/mockDashboardData.ts
+```
 
-Mock:
+Store all mock dashboard information here.
 
-- weekly productivity
-- completed tasks
-- goals
-- vehicle battery
-- fuel economy
-- engine temperature
+Examples:
+
+- Weekly productivity
+- Tasks
+- Goals
+- Monthly goal progress
+- Hot streak
+- Vehicle battery
+- Fuel economy
+- Engine temperature
+- Vehicle health
+- Dashboard statistics
+
+Components should consume data from this file rather than containing hardcoded values.
 
 ---
 
-## Charts
+# Charts
 
 Use Recharts.
 
-Charts:
+Charts should include:
 
-- Weekly productivity
-- Task completion
-- Vehicle statistics
+- Weekly Productivity
+- Task Completion Breakdown
+- Vehicle Health Statistics
+
+Charts must use data imported from:
+
+```
+src/data/mockDashboardData.ts
+```
+
+Charts should use:
+
+- ResponsiveContainer
+- Responsive sizing
+- Reusable components
 
 ---
 
-## App.tsx
+# Mobile Navigation
+
+## Purpose
+
+The mobile application should prioritize usability rather than attempting to display the entire desktop dashboard.
+
+Instead of shrinking every card onto one screen, mobile users should switch between focused views.
+
+---
+
+## Overview
+
+Purpose:
+
+Provide a quick summary of Orbital and the vehicle.
+
+Display:
+
+- Vehicle diagnostics
+- Vehicle status
+- Vehicle statistics
+- Important alerts
+- AI-generated daily summary
+- AI-generated vehicle summary
+- AI assistant
+- AI question input
+
+Overview should become the default screen for:
+
+- Mobile
+- Future Car Display
+
+---
+
+## Agenda
+
+Purpose:
+
+Provide productivity information.
+
+Display:
+
+- Task Tracker
+- Monthly Goal
+- Hot Streak
+- Goal Progress
+- Weekly Productivity
+- Task Completion Statistics
+
+Agenda belongs to:
+
+- Desktop Dashboard
+- Mobile Dashboard
+
+Agenda is NOT the primary vehicle driving screen.
+
+---
+
+## Navigation Behavior
+
+On Mobile:
+
+Create two tabs:
+
+- Overview
+- Agenda
+
+Requirements:
+
+- Overview selected by default
+- Switching tabs should not reload the application
+- Only the active view should render
+- Touch-friendly navigation
+- Large buttons
+- No horizontal scrolling
+- Preserve existing functionality
+
+Desktop and Tablet should continue using the existing dashboard layout.
+
+---
+
+# App.tsx
 
 Responsibilities:
 
-Import components.
+- Compose application components
+- Import layout components
+- Render dashboard views
+- Render responsive layouts
+- Keep feature-specific logic outside App.tsx whenever possible
 
-Compose dashboard.
+Simple UI state (such as the active mobile tab) may remain inside App.tsx if appropriate.
 
-No business logic.
-
----
-
-## Rules
-
-Do NOT
-
-- Rewrite entire project.
-- Remove existing features.
-- Change existing state unless required.
-- Change colors unless necessary.
-- Rename unrelated files.
-
-Do
-
-- Create reusable components.
-- Keep code beginner-readable.
-- Use TypeScript.
-- Keep Tailwind classes organized.
+If App.tsx grows too large, move that state into DashboardLayout or MobileNavigation.
 
 ---
 
-## Acceptance Criteria
+# Rules
 
-- App.tsx under ~100 lines.
-- Components reusable.
-- Dashboard responsive.
-- Recharts working.
-- npm run build passes.
+## Do NOT
+
+- Rewrite the entire project
+- Remove existing functionality
+- Break current features
+- Rename unrelated files
+- Change colors unless necessary
+- Change business logic unless required
+
+---
+
+## Do
+
+- Create reusable React components
+- Keep TypeScript beginner-readable
+- Organize Tailwind classes
+- Separate UI from mock data
+- Reuse components wherever possible
+- Follow existing project structure
+- Make responsive behavior predictable
+
+---
+
+# Constraints
+
+- Preserve current dashboard functionality.
+- Use React + TypeScript.
+- Use Tailwind CSS.
+- Use Recharts.
+- Do not introduce React Router unless already installed.
+- Minimize unnecessary file changes.
+- Prefer the smallest reasonable implementation.
+
+---
+
+# Future Considerations
+
+This architecture should support future Orbital features including:
+
+- Real OBD-II vehicle data
+- Voice Assistant
+- AI Planning
+- Calendar Integration
+- Music Controls
+- Maps & Navigation
+- Camera System
+- Notifications
+- IoT Devices
+- Local AI
+- Car Display Mode
+
+The current implementation should use mock data but remain easy to replace with live data later.
+
+---
+
+# Acceptance Criteria
+
+- App.tsx remains approximately 100 lines or fewer.
+- Components are reusable.
+- Dashboard cards are modular.
+- Charts use Recharts.
+- Charts consume centralized mock data.
+- Desktop dashboard remains unchanged.
+- Tablet layout remains responsive.
+- Mobile shows Overview by default.
+- Mobile uses Overview and Agenda tabs.
+- Only one mobile view is visible at a time.
+- Mobile contains no horizontal overflow at 375px width.
+- Charts remain readable on mobile.
+- Touch targets are easy to use.
+- Wide landscape displays work correctly.
+- Future car display defaults to Overview.
+- Existing features continue to function.
+- npm run build passes successfully.
