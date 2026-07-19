@@ -1,4 +1,5 @@
 import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
+import OrbitalMark from '../brand/OrbitalMark';
 
 export type Tab = 'overview' | 'tasks' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
@@ -25,7 +26,7 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
   const nav = (
     <>
       <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
-        <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
+        <OrbitalMark size={26} />
         <h1 className="text-xl font-bold tracking-wider text-white uppercase">Orbital</h1>
       </div>
 

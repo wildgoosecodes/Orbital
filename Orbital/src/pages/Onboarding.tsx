@@ -6,6 +6,7 @@ import { Send } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import OrbitalMark from '../components/brand/OrbitalMark';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -76,7 +77,7 @@ export default function Onboarding() {
       <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
+            <OrbitalMark size={26} />
             <h1 className="text-xl font-bold tracking-wider text-white uppercase">Orbital</h1>
           </div>
           <button

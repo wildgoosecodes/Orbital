@@ -5,12 +5,13 @@ import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
+import LoadingScreen from './components/loading/LoadingScreen';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen bg-slate-900" />;
+    return <LoadingScreen />;
   }
   if (!session) {
     return <Navigate to="/login" replace />;
