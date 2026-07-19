@@ -24,7 +24,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-100 px-4">
+    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-slate-900 text-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center gap-3 justify-center">
           <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />

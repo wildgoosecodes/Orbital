@@ -1,6 +1,6 @@
-import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Repeat2, Target } from 'lucide-react';
+import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Repeat2, Sparkles, Target } from 'lucide-react';
 
-export type Tab = 'overview' | 'tasks' | 'habits' | 'goals' | 'analytics';
+export type Tab = 'overview' | 'tasks' | 'habits' | 'goals' | 'analytics' | 'assistant';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -11,12 +11,14 @@ interface SidebarProps {
   onSignOut: () => void;
 }
 
-const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard }[] = [
+const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
   { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
   { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },
   { tab: 'goals', label: 'Goals', icon: Target },
   { tab: 'analytics', label: 'Analytics', icon: BarChart3 },
+  // The assistant already lives in the persistent side panel on xl+ screens.
+  { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },
 ];
 
 export default function Sidebar({ activeTab, onTabChange, open, onClose, userEmail, onSignOut }: SidebarProps) {
@@ -28,7 +30,7 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
       </div>
 
       <nav className="p-4 space-y-1">
-        {TABS.map(({ tab, label, icon: Icon }) => (
+        {TABS.map(({ tab, label, icon: Icon, xlHidden }) => (
           <button
             key={tab}
             onClick={() => {
@@ -36,6 +38,8 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
               onClose();
             }}
             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
+              xlHidden ? 'xl:hidden' : ''
+            } ${
               activeTab === tab
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                 : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'

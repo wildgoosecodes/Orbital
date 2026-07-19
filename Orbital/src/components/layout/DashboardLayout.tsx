@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ sidebar, header, assistant, children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-100 font-sans antialiased overflow-hidden">
+    <div className="flex h-[100dvh] bg-slate-900 text-slate-100 font-sans antialiased overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {sidebar}
 
       <main className="flex-1 flex flex-col overflow-y-auto bg-slate-900">

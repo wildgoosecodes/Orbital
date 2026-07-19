@@ -38,7 +38,13 @@ export default function Dashboard() {
         <OverviewPage userId={session.user.id} userEmail={userEmail} onNavigate={setActiveTab} />
       )}
 
-      {activeTab !== 'overview' && (
+      {activeTab === 'assistant' && (
+        <div className="h-[calc(100dvh-8rem)] xl:hidden bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+          <AIAssistantPanel />
+        </div>
+      )}
+
+      {activeTab !== 'overview' && activeTab !== 'assistant' && (
         <div className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold text-white capitalize">{activeTab}</h2>
