@@ -7,5 +7,5 @@
 .env.local
 .env.*.local
 
-# function secrets (ANTHROPIC_API_KEY etc.)
+# function secrets (GEMINI_API_KEY etc.)
 functions/.env

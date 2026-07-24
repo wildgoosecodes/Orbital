@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
-import Anthropic from 'npm:@anthropic-ai/sdk@0.32';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = 'gemini-flash-latest';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const MAX_TOOL_ROUNDS = 6;
 
 const CORS_HEADERS = {
@@ -28,7 +28,24 @@ Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, quarterly: 90, yearly: 365 };
 
-const tools: Anthropic.Tool[] = [
+type JsonSchema = {
+  type: string;
+  properties?: Record<string, JsonSchema>;
+  required?: string[];
+  enum?: string[];
+  description?: string;
+  minimum?: number;
+  maximum?: number;
+  items?: JsonSchema;
+};
+
+type ToolDef = {
+  name: string;
+  description: string;
+  input_schema: JsonSchema;
+};
+
+const tools: ToolDef[] = [
   {
     name: 'list_tasks',
     description: "List the user's tasks, optionally filtered by status.",
@@ -132,12 +149,12 @@ const tools: Anthropic.Tool[] = [
   },
   {
     name: 'update_goal_progress',
-    description: 'Set a goal\'s progress percentage (0-100). Reaching 100 marks it completed automatically.',
+    description: "Set a goal's progress percentage, an integer from 0 to 100. Reaching 100 marks it completed automatically.",
     input_schema: {
       type: 'object',
       properties: {
         goal_id: { type: 'string' },
-        progress: { type: 'number', minimum: 0, maximum: 100 },
+        progress: { type: 'number', description: 'Integer from 0 to 100.' },
       },
       required: ['goal_id', 'progress'],
     },
@@ -179,6 +196,28 @@ const tools: Anthropic.Tool[] = [
       },
       required: ['year_goal_id', 'title'],
     },
+  },
+];
+
+function toGeminiSchema(schema: JsonSchema): Record<string, unknown> {
+  const { minimum: _minimum, maximum: _maximum, properties, items, type, ...rest } = schema;
+  const out: Record<string, unknown> = { ...rest, type: type.toUpperCase() };
+  if (properties) {
+    out.properties = Object.fromEntries(
+      Object.entries(properties).map(([key, value]) => [key, toGeminiSchema(value)]),
+    );
+  }
+  if (items) out.items = toGeminiSchema(items);
+  return out;
+}
+
+const GEMINI_TOOLS = [
+  {
+    functionDeclarations: tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      parameters: toGeminiSchema(tool.input_schema),
+    })),
   },
 ];
 
@@ -380,6 +419,34 @@ function json(body: unknown, status = 200) {
   });
 }
 
+type GeminiPart = {
+  text?: string;
+  functionCall?: { name: string; args?: Record<string, unknown> };
+  functionResponse?: { name: string; response: unknown };
+};
+
+type GeminiContent = { role: 'user' | 'model'; parts: GeminiPart[] };
+
+const RETRYABLE_STATUS = new Set([429, 503]);
+
+async function callGemini(body: unknown): Promise<Record<string, unknown>> {
+  let lastError = '';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+
+    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return res.json();
+
+    lastError = `Gemini API error ${res.status}: ${await res.text()}`;
+    if (!RETRYABLE_STATUS.has(res.status)) throw new Error(lastError);
+  }
+  throw new Error(lastError);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
 
@@ -402,51 +469,57 @@ Deno.serve(async (req) => {
       return json({ error: 'messages is required' }, 400);
     }
 
-    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-    const conversation: Anthropic.MessageParam[] = [...messages];
+    const conversation: GeminiContent[] = messages.map((m: { role: 'user' | 'assistant'; content: string }) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
     const today = new Date().toISOString().slice(0, 10);
     const systemPrompt = mode === 'onboarding' ? ONBOARDING_SYSTEM_PROMPT : SYSTEM_PROMPT;
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 1024,
-        system: `${systemPrompt}\nToday's date is ${today}.`,
-        tools,
-        messages: conversation,
+      const data = await callGemini({
+        systemInstruction: { parts: [{ text: `${systemPrompt}\nToday's date is ${today}.` }] },
+        contents: conversation,
+        tools: GEMINI_TOOLS,
       });
+      const parts: GeminiPart[] = (data.candidates as { content?: { parts?: GeminiPart[] } }[] | undefined)?.[0]
+        ?.content?.parts ?? [];
+      conversation.push({ role: 'model', parts });
 
-      conversation.push({ role: 'assistant', content: response.content });
-
-      if (response.stop_reason !== 'tool_use') {
-        const text = response.content
-          .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-          .map((b) => b.text)
+      const functionCalls = parts.filter((p) => p.functionCall);
+      if (functionCalls.length === 0) {
+        const text = parts
+          .filter((p): p is { text: string } => typeof p.text === 'string')
+          .map((p) => p.text)
           .join('\n');
         return json({ reply: text || "I didn't get a response for that — try again?" });
       }
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
+      const responseParts: GeminiPart[] = [];
+      for (const part of functionCalls) {
+        const call = part.functionCall!;
         try {
-          const result = await runTool(supabase, user.id, block.name, block.input as Record<string, unknown>);
-          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
+          const result = await runTool(supabase, user.id, call.name, call.args ?? {});
+          responseParts.push({ functionResponse: { name: call.name, response: { result } } });
         } catch (err) {
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
-            is_error: true,
+          responseParts.push({
+            functionResponse: {
+              name: call.name,
+              response: { error: err instanceof Error ? err.message : String(err) },
+            },
           });
         }
       }
-      conversation.push({ role: 'user', content: toolResults });
+      conversation.push({ role: 'user', parts: responseParts });
     }
 
     return json({ reply: "That request needed more steps than I could take at once — try breaking it down?" });
   } catch (err) {
     console.error(err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('Gemini API error 429') || message.includes('Gemini API error 503')) {
+      return json({ error: "The assistant is getting a lot of requests right now — give it a few seconds and try again." }, 503);
+    }
     return json({ error: err instanceof Error ? err.message : 'Unexpected error' }, 500);
   }
 });
