@@ -8,7 +8,7 @@ interface TaskListProps {
 }
 
 export default function TaskList({ userId }: TaskListProps) {
-  const { tasks, loading, error, addTask, setStatus, removeTask } = useTasks(userId);
+  const { tasks, loading, error, addTask, setStatus, updateTask, removeTask } = useTasks(userId);
 
   function handleToggleDone(task: Task) {
     setStatus(task.id, task.status === 'done' ? 'todo' : 'done');
@@ -27,7 +27,7 @@ export default function TaskList({ userId }: TaskListProps) {
 
       <div className="space-y-2">
         {tasks.map((task) => (
-          <TaskItem key={task.id} task={task} onToggleDone={handleToggleDone} onDelete={removeTask} />
+          <TaskItem key={task.id} task={task} onToggleDone={handleToggleDone} onUpdate={updateTask} onDelete={removeTask} />
         ))}
       </div>
     </div>

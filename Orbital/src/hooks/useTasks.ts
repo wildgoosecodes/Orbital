@@ -56,11 +56,27 @@ export function useTasks(userId: string) {
     await refresh();
   }
 
+  async function updateTask(id: string, updates: NewTaskInput) {
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        title: updates.title,
+        description: updates.description || null,
+        priority: updates.priority || 'medium',
+        due_date: updates.due_date || null,
+        category: updates.category || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+    if (error) throw error;
+    await refresh();
+  }
+
   async function removeTask(id: string) {
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) throw error;
     await refresh();
   }
 
-  return { tasks, loading, error, addTask, setStatus, removeTask };
+  return { tasks, loading, error, addTask, setStatus, updateTask, removeTask };
 }
