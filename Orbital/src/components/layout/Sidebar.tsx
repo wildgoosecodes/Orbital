@@ -1,7 +1,7 @@
-import { BarChart3, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
+import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 
-export type Tab = 'overview' | 'tasks' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
+export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -15,6 +15,7 @@ interface SidebarProps {
 const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
   { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
   { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { tab: 'calendar', label: 'Calendar', icon: CalendarDays },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },
   { tab: 'roadmap', label: 'Roadmap', icon: Map },
   { tab: 'analytics', label: 'Analytics', icon: BarChart3 },

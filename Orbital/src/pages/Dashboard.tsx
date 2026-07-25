@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import Sidebar, { type Tab } from '../components/layout/Sidebar';
 import AIAssistantPanel from '../components/assistant/AIAssistantPanel';
 import TaskList from '../components/tasks/TaskList';
+import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
 import RoadmapView from '../components/roadmap/RoadmapView';
 import AnalyticsPanel from '../components/analytics/AnalyticsPanel';
@@ -67,6 +68,7 @@ export default function Dashboard() {
               </div>
 
               {activeTab === 'tasks' && <TaskList userId={session.user.id} />}
+              {activeTab === 'calendar' && <CalendarView userId={session.user.id} />}
               {activeTab === 'habits' && <HabitList userId={session.user.id} />}
               {activeTab === 'roadmap' && <RoadmapView userId={session.user.id} />}
               {activeTab === 'analytics' && <AnalyticsPanel userId={session.user.id} />}
