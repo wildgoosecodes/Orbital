@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'framer-motion';
+import { CalendarPlus } from 'lucide-react';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Task, TaskPriority } from '../../types/database';
+import { googleCalendarUrl } from '../../lib/googleCalendar';
 
 interface TaskItemProps {
   task: Task;
@@ -153,6 +155,18 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
       <span className={`text-xs font-semibold px-2 py-1 rounded uppercase tracking-wide ${PRIORITY_STYLES[task.priority]}`}>
         {task.priority}
       </span>
+
+      {task.due_date && (
+        <a
+          href={googleCalendarUrl(task)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Add to Google Calendar"
+          className="text-slate-500 hover:text-sky-400 p-1"
+        >
+          <CalendarPlus size={16} strokeWidth={1.5} />
+        </a>
+      )}
 
       <button
         onClick={startEditing}
