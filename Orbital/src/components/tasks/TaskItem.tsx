@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Task, TaskPriority } from '../../types/database';
 
@@ -128,9 +129,19 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
         }`}
       >
         {done && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2">
+          <motion.svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+          >
             <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          </motion.svg>
         )}
       </button>
 
