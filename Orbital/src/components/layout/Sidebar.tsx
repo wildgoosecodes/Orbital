@@ -1,5 +1,6 @@
 import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
+import WhatsNewModal from '../changelog/WhatsNewModal';
 
 export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
@@ -51,6 +52,7 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
             {label}
           </button>
         ))}
+        <WhatsNewModal onOpen={onClose} />
       </nav>
     </>
   );
