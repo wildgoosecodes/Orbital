@@ -12,6 +12,16 @@ export interface ChangelogEntry {
 /** Newest first. Add a new entry here whenever a shipped batch of work is worth telling users about. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2',
+    date: '2026-07-26',
+    features: [
+      {
+        title: 'Push notifications',
+        description: 'Turn on the bell icon next to your profile for a daily reminder covering tasks due today and upcoming goal deadlines.',
+      },
+    ],
+  },
+  {
     version: '0.1',
     date: '2026-07-25',
     features: [
