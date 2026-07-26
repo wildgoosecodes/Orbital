@@ -8,6 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        // Precached assets alone are well under this; raised only for the app bundle.
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+      },
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Orbital',
@@ -24,10 +31,6 @@ export default defineConfig({
           { src: 'pwa-maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-      },
-      workbox: {
-        // App reads/writes live Supabase data — never let the SW serve a stale API response.
-        navigateFallbackDenylist: [/^\/rest\//, /^\/auth\//, /^\/functions\//],
       },
     }),
   ],

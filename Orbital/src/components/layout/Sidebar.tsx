@@ -1,6 +1,7 @@
 import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
+import NotificationToggle from '../notifications/NotificationToggle';
 
 export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
@@ -9,6 +10,7 @@ interface SidebarProps {
   onTabChange: (tab: Tab) => void;
   open: boolean;
   onClose: () => void;
+  userId: string;
   userEmail: string;
   onSignOut: () => void;
 }
@@ -24,7 +26,7 @@ const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: 
   { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, open, onClose, userEmail, onSignOut }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, open, onClose, userId, userEmail, onSignOut }: SidebarProps) {
   const nav = (
     <>
       <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
@@ -62,7 +64,7 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
       {/* Desktop rail */}
       <aside className="hidden md:flex w-64 bg-slate-950 border-r border-slate-800 flex-col justify-between">
         <div>{nav}</div>
-        <ProfileCard userEmail={userEmail} onSignOut={onSignOut} />
+        <ProfileCard userId={userId} userEmail={userEmail} onSignOut={onSignOut} />
       </aside>
 
       {/* Mobile drawer */}
@@ -73,21 +75,22 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userEma
         }`}
       >
         <div>{nav}</div>
-        <ProfileCard userEmail={userEmail} onSignOut={onSignOut} />
+        <ProfileCard userId={userId} userEmail={userEmail} onSignOut={onSignOut} />
       </aside>
     </>
   );
 }
 
-function ProfileCard({ userEmail, onSignOut }: { userEmail: string; onSignOut: () => void }) {
+function ProfileCard({ userId, userEmail, onSignOut }: { userId: string; userEmail: string; onSignOut: () => void }) {
   const initials = userEmail.slice(0, 2).toUpperCase();
 
   return (
-    <div className="p-4 border-t border-slate-800 flex items-center gap-3">
+    <div className="p-4 border-t border-slate-800 flex items-center gap-2">
       <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
         {initials}
       </div>
       <p className="flex-1 min-w-0 text-xs text-slate-400 truncate">{userEmail}</p>
+      <NotificationToggle userId={userId} />
       <button
         onClick={onSignOut}
         aria-label="Sign out"

@@ -36,6 +36,7 @@ export default function Dashboard() {
           onTabChange={setActiveTab}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          userId={session.user.id}
           userEmail={userEmail}
           onSignOut={() => supabase.auth.signOut()}
         />
