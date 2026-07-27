@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, session } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -40,6 +40,11 @@ function clearSession() {
 }
 
 function createWindow() {
+  // Electron blocks getUserMedia by default unless the main process explicitly allows it.
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    callback(permission === 'media');
+  });
+
   const win = new BrowserWindow({
     width: 480,
     height: 640,
@@ -86,6 +91,30 @@ ipcMain.handle('briefing:get', async () => {
   try {
     const reply = await fetchBriefing(supabase);
     return { success: true, reply };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('voice:transcribe', async (_event, { base64, mimeType }) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+      body: { audio: { mimeType, data: base64 } },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return { success: true, text: data.text };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('chat:send', async (_event, messages) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('assistant-chat', { body: { messages } });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return { success: true, reply: data.reply };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
