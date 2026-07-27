@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import type { MilestoneWithGoals, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
-import type { Goal, GoalPeriodType, Milestone } from '../../types/database';
+import type { GoalWithItems, MilestoneWithGoals, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
+import type { GoalPeriodType, Milestone } from '../../types/database';
+import { calculateStreak } from '../../lib/habitStreak';
 
 interface MilestoneNodeProps {
   milestone: MilestoneWithGoals;
@@ -33,6 +34,11 @@ const NEXT_STATUS: Record<Milestone['status'], Milestone['status']> = {
   completed: 'pending',
 };
 
+function rollupProgress(goals: GoalWithItems[]): number {
+  if (goals.length === 0) return 0;
+  return Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length);
+}
+
 export default function MilestoneNode({
   milestone,
   isLast,
@@ -46,6 +52,7 @@ export default function MilestoneNode({
   const [goalTitle, setGoalTitle] = useState('');
   const [periodType, setPeriodType] = useState<GoalPeriodType>('weekly');
   const [submitting, setSubmitting] = useState(false);
+  const progress = rollupProgress(milestone.goals);
 
   async function handleAddGoal(e: FormEvent) {
     e.preventDefault();
@@ -90,6 +97,12 @@ export default function MilestoneNode({
               </svg>
             </button>
           </div>
+
+          {milestone.goals.length > 0 && (
+            <div className="mt-2 h-1 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full rounded-full bg-indigo-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+            </div>
+          )}
 
           {expanded && (
             <div className="mt-3 space-y-2">
@@ -138,13 +151,15 @@ function GoalRow({
   onUpdateProgress,
   onDelete,
 }: {
-  goal: Goal;
+  goal: GoalWithItems;
   onUpdateProgress: (id: string, progress: number) => void;
   onDelete: (id: string) => void;
 }) {
   const [value, setValue] = useState(goal.progress);
   const prevProgress = useRef(goal.progress);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [itemsExpanded, setItemsExpanded] = useState(false);
+  const hasLinkedItems = goal.tasks.length > 0 || goal.habits.length > 0;
 
   useEffect(() => {
     setValue(goal.progress);
@@ -168,7 +183,18 @@ function GoalRow({
       className={`p-2.5 bg-slate-950 border rounded-lg ${justCompleted ? 'border-emerald-500/60' : 'border-slate-800'}`}
     >
       <div className="flex items-center justify-between text-xs">
-        <span className="text-slate-300 truncate">{goal.title}</span>
+        <button
+          onClick={() => hasLinkedItems && setItemsExpanded((v) => !v)}
+          className="flex-1 flex items-center gap-1.5 text-left min-w-0"
+        >
+          {hasLinkedItems && (
+            <ChevronDown
+              size={11}
+              className={`text-slate-500 flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
+            />
+          )}
+          <span className="text-slate-300 truncate">{goal.title}</span>
+        </button>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-indigo-400 font-semibold">{value}%</span>
           <button onClick={() => onDelete(goal.id)} aria-label="Delete goal" className="text-slate-500 hover:text-rose-400">
@@ -178,18 +204,49 @@ function GoalRow({
           </button>
         </div>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={5}
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
-        onMouseUp={commit}
-        onTouchEnd={commit}
-        onKeyUp={commit}
-        className="mt-1.5 w-full accent-indigo-500"
-      />
+
+      {hasLinkedItems ? (
+        <div className="mt-1.5 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+          <div className="h-full rounded-full bg-indigo-500 transition-all duration-500" style={{ width: `${value}%` }} />
+        </div>
+      ) : (
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={value}
+          onChange={(e) => setValue(Number(e.target.value))}
+          onMouseUp={commit}
+          onTouchEnd={commit}
+          onKeyUp={commit}
+          className="mt-1.5 w-full accent-indigo-500"
+        />
+      )}
+
+      {hasLinkedItems && itemsExpanded && (
+        <div className="mt-2 space-y-1.5 pl-1">
+          {goal.tasks.map((task) => (
+            <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
+              <span
+                className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
+                  task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+                }`}
+              />
+              <span className={`truncate ${task.status === 'done' ? 'text-slate-500 line-through' : 'text-slate-400'}`}>
+                {task.title}
+              </span>
+            </div>
+          ))}
+          {goal.habits.map((habit) => (
+            <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
+              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex-shrink-0" />
+              <span className="truncate text-slate-400">{habit.name}</span>
+              <span className="flex-shrink-0 text-indigo-400/70">{calculateStreak(habit.completedDates)}d streak</span>
+            </div>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

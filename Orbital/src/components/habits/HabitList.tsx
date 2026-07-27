@@ -1,4 +1,5 @@
 import { useHabits } from '../../hooks/useHabits';
+import { useGoals } from '../../hooks/useGoals';
 import HabitForm from './HabitForm';
 import HabitItem from './HabitItem';
 
@@ -8,6 +9,8 @@ interface HabitListProps {
 
 export default function HabitList({ userId }: HabitListProps) {
   const { habits, loading, error, addHabit, toggleToday, removeHabit } = useHabits(userId);
+  const { goals } = useGoals(userId);
+  const goalTitleById = new Map(goals.map((g) => [g.id, g.title]));
 
   return (
     <div className="space-y-4">
@@ -22,7 +25,13 @@ export default function HabitList({ userId }: HabitListProps) {
 
       <div className="space-y-2">
         {habits.map((habit) => (
-          <HabitItem key={habit.id} habit={habit} onToggleToday={toggleToday} onDelete={removeHabit} />
+          <HabitItem
+            key={habit.id}
+            habit={habit}
+            onToggleToday={toggleToday}
+            onDelete={removeHabit}
+            goalTitle={habit.goal_id ? goalTitleById.get(habit.goal_id) : undefined}
+          />
         ))}
       </div>
     </div>

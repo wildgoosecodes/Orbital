@@ -27,6 +27,7 @@ export type HabitFrequency = 'daily' | 'weekly';
 export interface Habit {
   id: string;
   user_id: string;
+  goal_id: string | null;
   name: string;
   frequency: HabitFrequency;
   target_per_period: number;

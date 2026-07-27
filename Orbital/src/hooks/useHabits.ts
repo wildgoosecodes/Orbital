@@ -10,6 +10,7 @@ export interface HabitWithLogs extends Habit {
 export interface NewHabitInput {
   name: string;
   frequency: HabitFrequency;
+  goal_id?: string | null;
 }
 
 export function useHabits(userId: string) {
@@ -57,6 +58,7 @@ export function useHabits(userId: string) {
       name: input.name,
       frequency: input.frequency,
       target_per_period: 1,
+      goal_id: input.goal_id ?? null,
     });
     if (error) throw error;
     await refresh();

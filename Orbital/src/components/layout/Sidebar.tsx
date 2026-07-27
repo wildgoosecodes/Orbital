@@ -15,12 +15,12 @@ interface SidebarProps {
   onSignOut: () => void;
 }
 
-const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
+export const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
   { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
   { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
   { tab: 'calendar', label: 'Calendar', icon: CalendarDays },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },
-  { tab: 'roadmap', label: 'Roadmap', icon: Map },
+  { tab: 'roadmap', label: 'Yearly Goal Tree', icon: Map },
   { tab: 'analytics', label: 'Analytics', icon: BarChart3 },
   // The assistant already lives in the persistent side panel on xl+ screens.
   { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },

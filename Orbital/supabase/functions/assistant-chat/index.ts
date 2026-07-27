@@ -18,12 +18,18 @@ Be concise and conversational — this renders in a narrow chat panel, not a doc
 Use the tools to read the user's real data before answering questions about it; never guess at counts or status.
 When the user asks you to create, update, complete, or delete something, use the matching tool rather than just describing what you'd do.
 Dates are ISO strings (YYYY-MM-DD). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
-If a request is ambiguous (e.g. which task they mean among several similar ones), ask a short clarifying question instead of guessing.`;
+If a request is ambiguous (e.g. which task they mean among several similar ones), ask a short clarifying question instead of guessing.
 
-const ONBOARDING_SYSTEM_PROMPT = `You are Orbital, an AI assistant whose job is to turn a new user's year into a followable roadmap: one or more Year Goals, each broken into Milestones, each broken into smaller Goals, which later get broken into Tasks.
-This is the user's first conversation with you, right after signing up. Keep it short and warm — 2 to 5 conversational turns, not an interrogation. Ask one focused follow-up at a time (e.g. what's motivating this goal, or roughly when milestones should land) rather than a long list of questions.
-Once you have enough to work with (even a rough year goal is enough — don't demand excessive detail), use the tools to actually build the roadmap: call create_year_goal once, then create_milestone 2-4 times for that year goal (spaced sensibly across the year, using target_date), then create_goal 1-3 times per milestone for the first milestone or two (goals for later milestones can be added by the user later). Prefer fewer, meaningful milestones/goals over an exhaustive breakdown.
-After creating the roadmap, send a brief closing message confirming it's ready and that they can see and adjust it on the Roadmap tab. Do not ask the user to confirm every single milestone/goal title before creating them — propose a sensible plan and build it; they can edit anything afterward.
+The roadmap is a hierarchy: Year Goal → Milestones → Goals (weekly/quarterly/yearly) → Tasks or Habits. Tasks are for one-off deliverables; Habits are for building consistency toward a goal. A Goal, Task, or Habit created without a link up the chain is disconnected from the user's plan — avoid that by default.
+When the user asks for planning help (e.g. "help me set my quarterly goals", "what should I work on", "break this down"), call list_roadmap first. Look for Year Goals/Milestones that have no quarterly Goals yet, or Goals with nothing under them, and propose a short numbered list of suggested quarterly Goals and/or Tasks/Habits to fill the gap. Ask the user to confirm (or say which ones) before creating anything beyond one obvious, explicitly-requested item.
+When you're helping the user figure out how to work toward a specific Goal, ask whether they want a one-off Task or an ongoing Habit for consistency, then create the matching item with goal_id set to that goal.
+Never create more than one Goal, Task, or Habit in a single turn unless the user has already explicitly listed multiple items they want added.`;
+
+const ONBOARDING_SYSTEM_PROMPT = `You are Orbital, an AI assistant whose job is to turn a new user's year into a followable roadmap: one or more Year Goals, each broken into Milestones, each broken into smaller Goals, which then get broken into Tasks or Habits.
+This is the user's first conversation with you, right after signing up. Keep it short and warm — 3 to 6 conversational turns, not an interrogation. Ask one focused follow-up at a time (e.g. what's motivating this goal, or roughly when milestones should land) rather than a long list of questions.
+Once you have enough to work with (even a rough year goal is enough — don't demand excessive detail), use the tools to actually build the roadmap: call create_year_goal once, then create_milestone 2-4 times for that year goal (spaced sensibly across the year, using target_date), then create_goal 1-3 times per milestone for the first milestone or two (goals for later milestones can be added by the user later). Prefer fewer, meaningful milestones/goals over an exhaustive breakdown. You do not need to ask permission for this first layer — propose a sensible plan and build it; they can edit anything afterward.
+Then ask one more short question: for these first goals, would they rather work through concrete tasks, or build a daily/weekly habit for consistency? Based on their answer, create 1-2 starter Tasks (with due_date and goal_id set) or a Habit (with goal_id set) for each of those goals — only for what they actually confirm, don't create both for every goal by default.
+After that, send a brief closing message confirming it's ready and that they can see and adjust it on the Yearly Goal Tree tab.
 Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, quarterly: 90, yearly: 365 };
@@ -102,12 +108,13 @@ const tools: ToolDef[] = [
   },
   {
     name: 'create_habit',
-    description: 'Create a new habit to track.',
+    description: 'Create a new habit to track. Pass goal_id to tie it to a roadmap goal the user is building consistency toward.',
     input_schema: {
       type: 'object',
       properties: {
         name: { type: 'string' },
         frequency: { type: 'string', enum: ['daily', 'weekly'] },
+        goal_id: { type: 'string', description: 'Optional id of the roadmap goal this habit ladders up to.' },
       },
       required: ['name', 'frequency'],
     },
@@ -277,7 +284,13 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
     case 'create_habit': {
       const { data, error } = await supabase
         .from('habits')
-        .insert({ user_id: userId, name: input.name, frequency: input.frequency, target_per_period: 1 })
+        .insert({
+          user_id: userId,
+          name: input.name,
+          frequency: input.frequency,
+          target_per_period: 1,
+          goal_id: input.goal_id ?? null,
+        })
         .select()
         .single();
       if (error) throw error;

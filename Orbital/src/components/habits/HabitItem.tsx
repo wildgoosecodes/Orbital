@@ -1,3 +1,4 @@
+import { Milestone } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
 import { calculateStreak, todayStr } from '../../lib/habitStreak';
 
@@ -5,9 +6,10 @@ interface HabitItemProps {
   habit: HabitWithLogs;
   onToggleToday: (habit: HabitWithLogs) => void;
   onDelete: (id: string) => void;
+  goalTitle?: string;
 }
 
-export default function HabitItem({ habit, onToggleToday, onDelete }: HabitItemProps) {
+export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }: HabitItemProps) {
   const doneToday = habit.completedDates.includes(todayStr());
   const streak = calculateStreak(habit.completedDates);
 
@@ -30,6 +32,12 @@ export default function HabitItem({ habit, onToggleToday, onDelete }: HabitItemP
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white">{habit.name}</p>
         <p className="text-xs text-slate-500 mt-0.5 capitalize">{habit.frequency}</p>
+        {goalTitle && (
+          <p className="mt-1 flex items-center gap-1 text-[11px] text-indigo-400/80 truncate">
+            <Milestone size={11} className="flex-shrink-0" />
+            {goalTitle}
+          </p>
+        )}
       </div>
 
       <span className="text-xs font-semibold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 whitespace-nowrap">

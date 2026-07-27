@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import type { Goal, GoalPeriodType, Milestone, YearGoal } from '../types/database';
+import type { Goal, GoalPeriodType, Milestone, Task, YearGoal } from '../types/database';
 import { computePeriodRange } from '../lib/goalPeriods';
+import { computeGoalProgress } from '../lib/goalProgress';
+import type { HabitWithLogs } from './useHabits';
+
+export interface GoalWithItems extends Goal {
+  tasks: Task[];
+  habits: HabitWithLogs[];
+}
 
 export interface MilestoneWithGoals extends Milestone {
-  goals: Goal[];
+  goals: GoalWithItems[];
 }
 
 export interface YearGoalWithMilestones extends YearGoal {
@@ -35,10 +42,13 @@ export function useRoadmap(userId: string) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [yearGoalsRes, milestonesRes, goalsRes] = await Promise.all([
+    const [yearGoalsRes, milestonesRes, goalsRes, tasksRes, habitsRes, habitLogsRes] = await Promise.all([
       supabase.from('year_goals').select('*').order('created_at', { ascending: false }),
       supabase.from('milestones').select('*').order('position', { ascending: true }),
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
+      supabase.from('tasks').select('*'),
+      supabase.from('habits').select('*'),
+      supabase.from('habit_logs').select('habit_id, completed_on'),
     ]);
     if (yearGoalsRes.error) {
       setError(yearGoalsRes.error.message);
@@ -55,12 +65,58 @@ export function useRoadmap(userId: string) {
       setLoading(false);
       return;
     }
+    if (tasksRes.error) {
+      setError(tasksRes.error.message);
+      setLoading(false);
+      return;
+    }
+    if (habitsRes.error) {
+      setError(habitsRes.error.message);
+      setLoading(false);
+      return;
+    }
+    if (habitLogsRes.error) {
+      setError(habitLogsRes.error.message);
+      setLoading(false);
+      return;
+    }
 
-    const goalsByMilestone = new Map<string, Goal[]>();
+    const tasksByGoal = new Map<string, Task[]>();
+    for (const task of tasksRes.data) {
+      if (!task.goal_id) continue;
+      const list = tasksByGoal.get(task.goal_id) || [];
+      list.push(task);
+      tasksByGoal.set(task.goal_id, list);
+    }
+
+    const logsByHabit = new Map<string, string[]>();
+    for (const log of habitLogsRes.data) {
+      const list = logsByHabit.get(log.habit_id) || [];
+      list.push(log.completed_on);
+      logsByHabit.set(log.habit_id, list);
+    }
+    const habitsByGoal = new Map<string, HabitWithLogs[]>();
+    for (const habit of habitsRes.data) {
+      if (!habit.goal_id) continue;
+      const withLogs: HabitWithLogs = { ...habit, completedDates: logsByHabit.get(habit.id) || [] };
+      const list = habitsByGoal.get(habit.goal_id) || [];
+      list.push(withLogs);
+      habitsByGoal.set(habit.goal_id, list);
+    }
+
+    const goalsByMilestone = new Map<string, GoalWithItems[]>();
     for (const goal of goalsRes.data) {
       if (!goal.milestone_id) continue;
+      const goalTasks = tasksByGoal.get(goal.id) || [];
+      const goalHabits = habitsByGoal.get(goal.id) || [];
+      const withItems: GoalWithItems = {
+        ...goal,
+        progress: computeGoalProgress(goal, goalTasks, goalHabits),
+        tasks: goalTasks,
+        habits: goalHabits,
+      };
       const list = goalsByMilestone.get(goal.milestone_id) || [];
-      list.push(goal);
+      list.push(withItems);
       goalsByMilestone.set(goal.milestone_id, list);
     }
 

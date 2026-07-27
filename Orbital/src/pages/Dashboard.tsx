@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Header from '../components/layout/Header';
-import Sidebar, { type Tab } from '../components/layout/Sidebar';
+import Sidebar, { TABS, type Tab } from '../components/layout/Sidebar';
 import AIAssistantPanel from '../components/assistant/AIAssistantPanel';
 import TaskList from '../components/tasks/TaskList';
 import CalendarView from '../components/calendar/CalendarView';
@@ -64,7 +64,9 @@ export default function Dashboard() {
           {activeTab !== 'overview' && activeTab !== 'assistant' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-white capitalize">{activeTab}</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  {TABS.find((t) => t.tab === activeTab)?.label ?? activeTab}
+                </h2>
                 <p className="text-sm text-slate-400">Your personal dashboard.</p>
               </div>
 
