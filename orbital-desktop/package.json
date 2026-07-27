@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.45.0",
     "dotenv": "^16.4.5",
     "electron-store": "^8.2.0",
+    "onnxruntime-web": "^1.27.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {
@@ -27,7 +28,14 @@
       "config.js",
       "briefing.js",
       "renderer/**/*",
+      "assets/**/*",
       "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "wakeword",
+        "to": "wakeword"
+      }
     ],
     "win": {
       "target": "nsis",

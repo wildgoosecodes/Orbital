@@ -12,6 +12,9 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let isRecording = false;
 
+// Silence-detection state for hands-free (wake-word-triggered) recording only.
+let silenceMonitor = null;
+
 function speak(text) {
   if (!text) return;
   window.speechSynthesis.cancel();
@@ -81,7 +84,52 @@ startupToggle.addEventListener('change', async (e) => {
   await window.orbital.setStartupSetting(e.target.checked);
 });
 
-async function startRecording() {
+/** Watches amplitude on the given stream; calls onSilence() once speaking has
+ *  clearly stopped. Only used for hands-free (wake-word) recording. */
+function startSilenceMonitor(stream, onSilence) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaStreamSource(stream);
+  const analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  source.connect(analyser);
+
+  const data = new Float32Array(analyser.fftSize);
+  const SILENCE_THRESHOLD = 0.02; // RMS amplitude
+  const MIN_SPEAKING_MS = 800; // ignore leading silence before the user starts talking
+  const SILENCE_DURATION_MS = 1200; // how long silence must persist to auto-stop
+  const startedAt = Date.now();
+  let silenceStartedAt = null;
+  let stopped = false;
+
+  const intervalId = setInterval(() => {
+    if (stopped) return;
+    analyser.getFloatTimeDomainData(data);
+    let sumSquares = 0;
+    for (let i = 0; i < data.length; i++) sumSquares += data[i] * data[i];
+    const rms = Math.sqrt(sumSquares / data.length);
+
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < MIN_SPEAKING_MS) return;
+
+    if (rms < SILENCE_THRESHOLD) {
+      if (silenceStartedAt === null) silenceStartedAt = Date.now();
+      else if (Date.now() - silenceStartedAt >= SILENCE_DURATION_MS) {
+        stopped = true;
+        onSilence();
+      }
+    } else {
+      silenceStartedAt = null;
+    }
+  }, 150);
+
+  return function cleanup() {
+    stopped = true;
+    clearInterval(intervalId);
+    audioCtx.close();
+  };
+}
+
+async function startRecording(handsFree = false) {
   let stream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -97,6 +145,10 @@ async function startRecording() {
   });
   mediaRecorder.addEventListener('stop', async () => {
     stream.getTracks().forEach((track) => track.stop());
+    if (silenceMonitor) {
+      silenceMonitor();
+      silenceMonitor = null;
+    }
     await handleRecordingComplete();
   });
 
@@ -104,7 +156,11 @@ async function startRecording() {
   isRecording = true;
   micBtn.classList.add('recording');
   micBtn.setAttribute('aria-label', 'Stop recording');
-  micStatusEl.textContent = 'Listening… click again to stop';
+  micStatusEl.textContent = handsFree ? 'Listening for your command…' : 'Listening… click again to stop';
+
+  if (handsFree) {
+    silenceMonitor = startSilenceMonitor(stream, () => stopRecording());
+  }
 }
 
 function stopRecording() {
@@ -156,7 +212,7 @@ micBtn.addEventListener('click', () => {
   if (isRecording) {
     stopRecording();
   } else {
-    startRecording();
+    startRecording(false);
   }
 });
 

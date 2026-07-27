@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, safeStorage, session } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, session, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -16,6 +16,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 const store = new Store();
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let win = null;
+let tray = null;
+let isQuitting = false;
 
 function saveRefreshToken(refreshToken) {
   if (safeStorage.isEncryptionAvailable()) {
@@ -45,7 +49,7 @@ function createWindow() {
     callback(permission === 'media');
   });
 
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 480,
     height: 640,
     resizable: false,
@@ -53,10 +57,34 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // The wake-word ONNX pipeline runs continuously in this renderer and must
+      // keep running even while the window is hidden in the tray.
+      backgroundThrottling: false,
     },
   });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  // Keep listening in the background — closing the window hides it instead of quitting.
+  win.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      win.hide();
+    }
+  });
+}
+
+function createTray() {
+  const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-icon.png'));
+  tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  tray.setToolTip('Orbital Desktop');
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Show Orbital', click: () => { win.show(); win.focus(); } },
+      { label: 'Quit', click: () => { isQuitting = true; app.quit(); } },
+    ]),
+  );
+  tray.on('click', () => { win.show(); win.focus(); });
 }
 
 ipcMain.handle('auth:restoreSession', async () => {
@@ -129,8 +157,27 @@ ipcMain.handle('startup:set', (_event, openAtLogin) => {
   return app.getLoginItemSettings().openAtLogin;
 });
 
-app.whenReady().then(createWindow);
+ipcMain.handle('window:showAndFocus', () => {
+  win.show();
+  win.focus();
+});
+
+ipcMain.handle('wakeword:getModelDir', () => {
+  const base = app.isPackaged ? process.resourcesPath : __dirname;
+  return path.join(base, 'wakeword').replace(/\\/g, '/');
+});
+
+app.whenReady().then(() => {
+  createWindow();
+  createTray();
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
+});
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // Windows only, tray-backed — the window hides rather than closes, so this
+  // shouldn't normally fire outside of an actual app.quit().
+  if (process.platform !== 'darwin' && isQuitting) app.quit();
 });

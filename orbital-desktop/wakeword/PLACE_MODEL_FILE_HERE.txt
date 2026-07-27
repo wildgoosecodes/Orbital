@@ -1,0 +1,21 @@
+CURRENT STATUS: hey_orbital.onnx in this folder is actually openWakeWord's
+pretrained "Hey Jarvis" model (a stand-in), NOT a real custom "Hey Orbital"
+model — training a real one via Colab hit repeated dependency issues
+(piper-phonemize has no Python 3.12 wheel, torch_audiomentations calls a
+removed torchaudio API). Say "Hey Jarvis" to trigger it for now.
+
+To swap in a real "Hey Orbital" model later:
+1. Fix/retry the Colab training notebook (notebooks/automatic_model_training.ipynb
+   in https://github.com/dscripka/openWakeWord), target_phrase = ["hey orbital"].
+   Known fixes needed: `!pip install piper-phonemize-fix` (instead of the
+   unmaintained piper-phonemize, which has no Python 3.12 wheels), and patching
+   torchaudio before training:
+     import torchaudio
+     if not hasattr(torchaudio, "set_audio_backend"):
+         torchaudio.set_audio_backend = lambda *args, **kwargs: None
+2. Download the resulting my_custom_model/hey_orbital.onnx from Colab.
+3. Overwrite this file with it, keeping the same filename (hey_orbital.onnx).
+4. Rebuild (npm run dist).
+
+melspectrogram.onnx and embedding_model.onnx are the real, official shared
+models and don't need to change.

@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('orbital', {
   getBriefing: () => ipcRenderer.invoke('briefing:get'),
   transcribe: (base64, mimeType) => ipcRenderer.invoke('voice:transcribe', { base64, mimeType }),
   sendChat: (messages) => ipcRenderer.invoke('chat:send', messages),
+  showAndFocus: () => ipcRenderer.invoke('window:showAndFocus'),
+  getWakewordModelDir: () => ipcRenderer.invoke('wakeword:getModelDir'),
   getStartupSetting: () => ipcRenderer.invoke('startup:get'),
   setStartupSetting: (openAtLogin) => ipcRenderer.invoke('startup:set', openAtLogin),
 });
