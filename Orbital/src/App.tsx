@@ -7,6 +7,7 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
+import LandingPage from './pages/LandingPage';
 import LoadingScreen from './components/loading/LoadingScreen';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -37,8 +38,9 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/" element={<LandingPage />} />
         <Route
-          path="/"
+          path="/app"
           element={
             <ProtectedRoute>
               <Dashboard />

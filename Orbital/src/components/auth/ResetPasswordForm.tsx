@@ -51,7 +51,7 @@ export default function ResetPasswordForm() {
       return;
     }
     setDone(true);
-    setTimeout(() => navigate('/'), 1500);
+    setTimeout(() => navigate('/app'), 1500);
   }
 
   if (invalidLink) {

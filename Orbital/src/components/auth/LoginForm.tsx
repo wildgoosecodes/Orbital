@@ -21,7 +21,7 @@ export default function LoginForm() {
       setError(error.message);
       return;
     }
-    navigate('/');
+    navigate('/app');
   }
 
   return (

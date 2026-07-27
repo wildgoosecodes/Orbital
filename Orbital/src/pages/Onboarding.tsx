@@ -36,7 +36,7 @@ export default function Onboarding() {
     try {
       await completeOnboarding();
     } finally {
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     }
   }
 
