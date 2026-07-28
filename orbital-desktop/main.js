@@ -63,7 +63,7 @@ function createWindow() {
     },
   });
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  win.loadFile(path.join(__dirname, 'dist-renderer', 'index.html'));
 
   // Keep listening in the background — closing the window hides it instead of quitting.
   win.on('close', (e) => {

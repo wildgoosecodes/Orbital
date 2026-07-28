@@ -1,31 +1,45 @@
+import * as ort from 'onnxruntime-web';
+
 /**
  * "Hey Orbital" hands-free detection via openWakeWord's 3-stage ONNX pipeline,
  * run continuously on live mic audio: melspectrogram.onnx -> embedding_model.onnx
- * -> a custom hey_orbital.onnx classifier, scored over a sliding embedding window.
+ * -> a custom wake-word classifier, scored over a sliding embedding window.
  * Tensor shapes/names below were verified empirically against the real model files,
  * not assumed from documentation (see project memory for the specifics).
+ *
+ * Ported as-is from the original vanilla-JS version — logic unchanged, only the
+ * wiring (globals -> callback, <script> global `ort` -> ES import) was updated.
  */
-(async function initWakeWord() {
-  const CHUNK_SIZE = 1280; // samples per melspectrogram call (80ms @ 16kHz)
-  const MEL_WINDOW = 76; // mel frames per embedding-model call
-  const MEL_STRIDE = 8; // advance this many frames between embedding calls
-  const TARGET_SAMPLE_RATE = 16000;
-  const DETECTION_THRESHOLD = 0.5;
-  const DETECTION_DEBOUNCE_MS = 3000;
 
-  function concatFloat32(a, b) {
-    const out = new Float32Array(a.length + b.length);
-    out.set(a, 0);
-    out.set(b, a.length);
-    return out;
-  }
+const CHUNK_SIZE = 1280; // samples per melspectrogram call (80ms @ 16kHz)
+const MEL_WINDOW = 76; // mel frames per embedding-model call
+const MEL_STRIDE = 8; // advance this many frames between embedding calls
+const TARGET_SAMPLE_RATE = 16000;
+const DETECTION_THRESHOLD = 0.5;
+const DETECTION_DEBOUNCE_MS = 3000;
 
-  async function loadModel(dirUrl, filename) {
-    const res = await fetch(`${dirUrl}/${filename}`);
-    if (!res.ok) throw new Error(`Failed to fetch ${filename}: HTTP ${res.status}`);
-    const buffer = await res.arrayBuffer();
-    return ort.InferenceSession.create(buffer);
-  }
+function concatFloat32(a, b) {
+  const out = new Float32Array(a.length + b.length);
+  out.set(a, 0);
+  out.set(b, a.length);
+  return out;
+}
+
+async function loadModel(dirUrl, filename) {
+  const res = await fetch(`${dirUrl}/${filename}`);
+  if (!res.ok) throw new Error(`Failed to fetch ${filename}: HTTP ${res.status}`);
+  const buffer = await res.arrayBuffer();
+  return ort.InferenceSession.create(buffer);
+}
+
+/**
+ * Starts continuous wake-word listening. Calls `onDetected()` each time the
+ * phrase is heard (debounced). Returns a stop() function, or null if listening
+ * couldn't start (missing model files, no mic, etc. — logged, not thrown).
+ */
+export async function startWakeWordListening({ getModelDir, onDetected }) {
+  // No manual wasmPaths override — Vite auto-detects and bundles onnxruntime-web's
+  // internal wasm asset reference correctly (verified: exactly one file, no duplication).
 
   let melSession;
   let embSession;
@@ -35,9 +49,7 @@
   let embDim;
 
   try {
-    ort.env.wasm.wasmPaths = '../node_modules/onnxruntime-web/dist/';
-
-    const modelDir = await window.orbital.getWakewordModelDir();
+    const modelDir = await getModelDir();
     const dirUrl = `file:///${modelDir}`.replace(/\\/g, '/');
 
     melSession = await loadModel(dirUrl, 'melspectrogram.onnx');
@@ -52,7 +64,7 @@
     console.log('Wake-word model loaded — listening (see wakeword/PLACE_MODEL_FILE_HERE.txt for which phrase is currently trained).');
   } catch (err) {
     console.log('Wake-word listening not started (model missing or failed to load):', err.message);
-    return;
+    return null;
   }
 
   let melFrameBuffer = [];
@@ -60,16 +72,14 @@
   let sampleBuffer = new Float32Array(0);
   let framesSinceLastEmbedding = 0;
   let lastDetectionAt = 0;
+  let stopped = false;
 
-  async function onWakeWordDetected() {
+  function handleDetection() {
     const now = Date.now();
     if (now - lastDetectionAt < DETECTION_DEBOUNCE_MS) return;
     lastDetectionAt = now;
     console.log('Wake word detected');
-    await window.orbital.showAndFocus();
-    if (typeof isRecording !== 'undefined' && !isRecording && typeof startRecording === 'function') {
-      startRecording(true);
-    }
+    onDetected();
   }
 
   async function processChunk(chunk) {
@@ -108,7 +118,7 @@
         const clInput = new ort.Tensor('float32', stacked, [1, numEmbeddings, embDim]);
         const clResults = await classifierSession.run({ [classifierInputName]: clInput });
         const score = clResults[classifierSession.outputNames[0]].data[0];
-        if (score >= DETECTION_THRESHOLD) onWakeWordDetected();
+        if (score >= DETECTION_THRESHOLD) handleDetection();
       }
     }
   }
@@ -118,12 +128,12 @@
     micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } });
   } catch (err) {
     console.log('Wake-word listening not started — microphone unavailable:', err.message);
-    return;
+    return null;
   }
 
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const source = audioCtx.createMediaStreamSource(micStream);
-  await audioCtx.audioWorklet.addModule('wakewordWorkletProcessor.js');
+  await audioCtx.audioWorklet.addModule('./wakewordWorkletProcessor.js');
   const workletNode = new AudioWorkletNode(audioCtx, 'pcm-capture-processor');
   source.connect(workletNode);
 
@@ -131,6 +141,7 @@
   let resampleTail = new Float32Array(0);
 
   workletNode.port.onmessage = (event) => {
+    if (stopped) return;
     const incoming = event.data;
     const merged = concatFloat32(resampleTail, incoming);
 
@@ -155,4 +166,11 @@
       processChunk(chunk).catch((err) => console.error('Wake-word processing error:', err));
     }
   };
-})();
+
+  return function stop() {
+    stopped = true;
+    workletNode.port.onmessage = null;
+    micStream.getTracks().forEach((track) => track.stop());
+    audioCtx.close();
+  };
+}

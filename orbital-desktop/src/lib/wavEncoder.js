@@ -1,6 +1,6 @@
 /** Converts a recorded audio Blob (e.g. MediaRecorder's webm/opus) into a 16-bit PCM WAV,
  *  since that's a format Gemini's audio understanding reliably accepts. */
-async function blobToWav(blob) {
+export async function blobToWav(blob) {
   const arrayBuffer = await blob.arrayBuffer();
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
