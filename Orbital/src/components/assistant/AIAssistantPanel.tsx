@@ -14,6 +14,11 @@ const SUGGESTIONS = [
   "How's my habit streak looking?",
 ];
 
+// Cap how much history is sent to the model — the full transcript stays visible
+// in the UI, but a long-running session shouldn't grow the request payload (and
+// Gemini token cost) forever.
+const MAX_HISTORY_MESSAGES = 20;
+
 export default function AIAssistantPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -37,7 +42,7 @@ export default function AIAssistantPanel() {
 
     try {
       const { data, error: invokeError } = await supabase.functions.invoke('assistant-chat', {
-        body: { messages: nextMessages },
+        body: { messages: nextMessages.slice(-MAX_HISTORY_MESSAGES) },
       });
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);

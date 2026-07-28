@@ -7,6 +7,10 @@ const SILENCE_THRESHOLD = 0.02; // RMS amplitude
 const MIN_SPEAKING_MS = 800; // ignore leading silence before the user starts talking
 const SILENCE_DURATION_MS = 1200; // how long silence must persist to auto-stop
 
+// This app is meant to stay open for days — cap conversation history so it
+// doesn't grow the chat payload/DOM/memory forever over a long-running session.
+const MAX_HISTORY_MESSAGES = 20;
+
 function speak(text) {
   if (!text) return;
   window.speechSynthesis.cancel();
@@ -84,7 +88,7 @@ export default function MainView({ onSignOut }) {
   }, []);
 
   function appendMessage(role, content) {
-    conversationRef.current = [...conversationRef.current, { role, content }];
+    conversationRef.current = [...conversationRef.current, { role, content }].slice(-MAX_HISTORY_MESSAGES);
     setMessages(conversationRef.current);
   }
 
