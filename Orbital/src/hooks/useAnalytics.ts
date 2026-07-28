@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
 import type { Task, TaskStatus } from '../types/database';
+import { fetchTasks, tasksQueryKey } from './useTasks';
 
 export interface DayCompletion {
   date: string;
@@ -54,32 +54,18 @@ function buildStatusBreakdown(tasks: Task[]): StatusCount[] {
   return STATUS_ORDER.map(({ status, label }) => ({ status, label, count: counts.get(status) || 0 }));
 }
 
+/** Reads the same shared `tasks` query useTasks() uses — no fetch of its own. */
 export function useAnalytics(userId: string) {
-  const [last7Days, setLast7Days] = useState<DayCompletion[]>([]);
-  const [statusBreakdown, setStatusBreakdown] = useState<StatusCount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: tasks = [], isLoading: loading, error } = useQuery({
+    queryKey: tasksQueryKey(userId),
+    queryFn: fetchTasks,
+    enabled: !!userId,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    supabase
-      .from('tasks')
-      .select('*')
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          setError(error.message);
-        } else {
-          setLast7Days(buildLast7Days(data));
-          setStatusBreakdown(buildStatusBreakdown(data));
-          setError(null);
-        }
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-
-  return { last7Days, statusBreakdown, loading, error };
+  return {
+    last7Days: buildLast7Days(tasks),
+    statusBreakdown: buildStatusBreakdown(tasks),
+    loading,
+    error: error ? (error as Error).message : null,
+  };
 }
