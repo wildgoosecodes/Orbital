@@ -63,7 +63,11 @@ export default function YearGoalCard({
           </div>
         </div>
         <button
-          onClick={() => onRemoveYearGoal(yearGoal.id)}
+          onClick={() => {
+            if (window.confirm(`Delete "${yearGoal.title}" and all its milestones and goals? This can't be undone.`)) {
+              onRemoveYearGoal(yearGoal.id);
+            }
+          }}
           aria-label="Delete year goal"
           className="text-slate-500 hover:text-rose-400 p-1"
         >

@@ -44,7 +44,13 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
         {streak} day{streak === 1 ? '' : 's'}
       </span>
 
-      <button onClick={() => onDelete(habit.id)} aria-label="Delete habit" className="text-slate-500 hover:text-rose-400 p-1">
+      <button
+        onClick={() => {
+          if (window.confirm(`Delete "${habit.name}" and its whole history? This can't be undone.`)) onDelete(habit.id);
+        }}
+        aria-label="Delete habit"
+        className="text-slate-500 hover:text-rose-400 p-1"
+      >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

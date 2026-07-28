@@ -88,7 +88,11 @@ export default function MilestoneNode({
               {milestone.status}
             </span>
             <button
-              onClick={() => onRemoveMilestone(milestone.id)}
+              onClick={() => {
+                if (window.confirm(`Delete "${milestone.title}" and all its goals? This can't be undone.`)) {
+                  onRemoveMilestone(milestone.id);
+                }
+              }}
               aria-label="Delete milestone"
               className="text-slate-500 hover:text-rose-400 p-1 flex-shrink-0"
             >
@@ -197,7 +201,13 @@ function GoalRow({
         </button>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-indigo-400 font-semibold">{value}%</span>
-          <button onClick={() => onDelete(goal.id)} aria-label="Delete goal" className="text-slate-500 hover:text-rose-400">
+          <button
+            onClick={() => {
+              if (window.confirm(`Delete "${goal.title}"? This can't be undone.`)) onDelete(goal.id);
+            }}
+            aria-label="Delete goal"
+            className="text-slate-500 hover:text-rose-400"
+          >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>

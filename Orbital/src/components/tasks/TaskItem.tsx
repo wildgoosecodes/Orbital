@@ -179,7 +179,9 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
       </button>
 
       <button
-        onClick={() => onDelete(task.id)}
+        onClick={() => {
+          if (window.confirm(`Delete "${task.title}"? This can't be undone.`)) onDelete(task.id);
+        }}
         aria-label="Delete task"
         className="text-slate-500 hover:text-rose-400 p-1"
       >
