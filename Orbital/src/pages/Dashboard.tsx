@@ -13,6 +13,7 @@ import AnalyticsPanel from '../components/analytics/AnalyticsPanel';
 import OverviewPage from '../components/overview/OverviewPage';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { useAssistantChat } from '../hooks/useAssistantChat';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Dashboard() {
@@ -20,6 +21,10 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { session } = useAuth();
   const { profile, loading: profileLoading } = useProfile(session?.user.id ?? '');
+  // One shared conversation — the desktop-sidebar and mobile-tab assistant panels
+  // are both mounted simultaneously (CSS-hidden depending on viewport), so they'd
+  // silently diverge into two different conversations if each managed its own state.
+  const assistantChat = useAssistantChat();
 
   if (!session) return null;
   const userEmail = session.user.email ?? '';
@@ -42,7 +47,7 @@ export default function Dashboard() {
         />
       }
       header={<Header onMenuClick={() => setSidebarOpen(true)} />}
-      assistant={<AIAssistantPanel />}
+      assistant={<AIAssistantPanel {...assistantChat} />}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -57,7 +62,7 @@ export default function Dashboard() {
 
           {activeTab === 'assistant' && (
             <div className="h-[calc(100dvh-8rem)] xl:hidden bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-              <AIAssistantPanel />
+              <AIAssistantPanel {...assistantChat} />
             </div>
           )}
 

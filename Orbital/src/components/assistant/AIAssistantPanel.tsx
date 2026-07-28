@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Send, Sparkles } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import type { ChatMessage } from '../../hooks/useAssistantChat';
 
 const SUGGESTIONS = [
   "What's on my plate today?",
@@ -14,50 +9,30 @@ const SUGGESTIONS = [
   "How's my habit streak looking?",
 ];
 
-// Cap how much history is sent to the model — the full transcript stays visible
-// in the UI, but a long-running session shouldn't grow the request payload (and
-// Gemini token cost) forever.
-const MAX_HISTORY_MESSAGES = 20;
+interface AIAssistantPanelProps {
+  messages: ChatMessage[];
+  sending: boolean;
+  error: string | null;
+  sendMessage: (text: string) => void;
+}
 
-export default function AIAssistantPanel() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export default function AIAssistantPanel({ messages, sending, error, sendMessage }: AIAssistantPanelProps) {
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, sending]);
 
-  async function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed || sending) return;
-
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
-    setMessages(nextMessages);
-    setInput('');
-    setError(null);
-    setSending(true);
-
-    try {
-      const { data, error: invokeError } = await supabase.functions.invoke('assistant-chat', {
-        body: { messages: nextMessages.slice(-MAX_HISTORY_MESSAGES) },
-      });
-      if (invokeError) throw invokeError;
-      if (data?.error) throw new Error(data.error);
-
-      setMessages([...nextMessages, { role: 'assistant', content: data.reply as string }]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong reaching the assistant.');
-    } finally {
-      setSending(false);
-    }
-  }
-
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!input.trim()) return;
     sendMessage(input);
+    setInput('');
+  }
+
+  function handleSuggestion(s: string) {
+    sendMessage(s);
   }
 
   return (
@@ -79,7 +54,7 @@ export default function AIAssistantPanel() {
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
-                  onClick={() => sendMessage(s)}
+                  onClick={() => handleSuggestion(s)}
                   className="w-full text-left text-xs text-slate-400 bg-slate-900 hover:bg-slate-800 hover:text-slate-200 border border-slate-800 rounded-lg px-3 py-2 transition-colors"
                 >
                   {s}
