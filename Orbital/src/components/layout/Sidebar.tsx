@@ -61,16 +61,15 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userId,
 
   return (
     <>
-      {/* Desktop rail */}
-      <aside className="hidden md:flex w-64 bg-slate-950 border-r border-slate-800 flex-col justify-between">
-        <div>{nav}</div>
-        <ProfileCard userId={userId} userEmail={userEmail} onSignOut={onSignOut} />
-      </aside>
-
-      {/* Mobile drawer */}
+      {/* Mobile-only backdrop, shown while the drawer is open */}
       {open && <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={onClose} />}
+
+      {/* Single sidebar: a fixed, slide-in drawer below md, a static in-flow rail at md+.
+          Rendered once (not duplicated per breakpoint) so nav/WhatsNewModal/NotificationToggle
+          don't double-mount and double-run their effects (localStorage reads, push-subscription
+          checks) on every dashboard load. */}
       <aside
-        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between transform transition-transform duration-200 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between transform transition-transform duration-200 md:relative md:z-auto md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
