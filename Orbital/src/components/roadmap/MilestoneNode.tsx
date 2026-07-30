@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { GoalWithItems, MilestoneWithGoals, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
+import type { NewTaskInput } from '../../hooks/useTasks';
 import type { GoalPeriodType, Milestone } from '../../types/database';
 import { calculateStreak } from '../../lib/habitStreak';
 import { expandCollapse, expandCollapseTransition, tapScale } from '../../lib/motion';
@@ -11,6 +12,7 @@ interface MilestoneNodeProps {
   milestone: MilestoneWithGoals;
   isLast: boolean;
   onAddGoal: (input: NewRoadmapGoalInput) => Promise<void>;
+  onAddTask: (input: NewTaskInput) => Promise<void>;
   onUpdateGoalProgress: (id: string, progress: number) => Promise<void>;
   onUpdateStatus: (id: string, status: Milestone['status']) => Promise<void>;
   onRemoveMilestone: (id: string) => Promise<void>;
@@ -44,6 +46,7 @@ export default function MilestoneNode({
   milestone,
   isLast,
   onAddGoal,
+  onAddTask,
   onUpdateGoalProgress,
   onUpdateStatus,
   onRemoveMilestone,
@@ -129,7 +132,13 @@ export default function MilestoneNode({
                     <p className="text-xs text-orbital-text-faint">No goals yet — add one below.</p>
                   )}
                   {milestone.goals.map((goal) => (
-                    <GoalRow key={goal.id} goal={goal} onUpdateProgress={onUpdateGoalProgress} onDelete={onRemoveGoal} />
+                    <GoalRow
+                      key={goal.id}
+                      goal={goal}
+                      onUpdateProgress={onUpdateGoalProgress}
+                      onDelete={onRemoveGoal}
+                      onAddTask={onAddTask}
+                    />
                   ))}
 
                   <form onSubmit={handleAddGoal} className="flex flex-col sm:flex-row gap-2 pt-1">
@@ -172,16 +181,32 @@ function GoalRow({
   goal,
   onUpdateProgress,
   onDelete,
+  onAddTask,
 }: {
   goal: GoalWithItems;
   onUpdateProgress: (id: string, progress: number) => void;
   onDelete: (id: string) => void;
+  onAddTask: (input: NewTaskInput) => Promise<void>;
 }) {
   const [value, setValue] = useState(goal.progress);
   const prevProgress = useRef(goal.progress);
   const [justCompleted, setJustCompleted] = useState(false);
   const [itemsExpanded, setItemsExpanded] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [addingTask, setAddingTask] = useState(false);
   const hasLinkedItems = goal.tasks.length > 0 || goal.habits.length > 0;
+
+  async function handleAddTask(e: FormEvent) {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    setAddingTask(true);
+    try {
+      await onAddTask({ title: newTaskTitle.trim(), goal_id: goal.id });
+      setNewTaskTitle('');
+    } finally {
+      setAddingTask(false);
+    }
+  }
 
   useEffect(() => {
     setValue(goal.progress);
@@ -207,15 +232,13 @@ function GoalRow({
     >
       <div className="flex items-center justify-between text-xs">
         <button
-          onClick={() => hasLinkedItems && setItemsExpanded((v) => !v)}
+          onClick={() => setItemsExpanded((v) => !v)}
           className="flex-1 flex items-center gap-1.5 text-left min-w-0"
         >
-          {hasLinkedItems && (
-            <ChevronDown
-              size={11}
-              className={`text-orbital-text-faint flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
-            />
-          )}
+          <ChevronDown
+            size={11}
+            className={`text-orbital-text-faint flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
+          />
           <span className="text-orbital-text-muted truncate">{goal.title}</span>
         </button>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -259,7 +282,7 @@ function GoalRow({
       )}
 
       <AnimatePresence initial={false}>
-        {hasLinkedItems && itemsExpanded && (
+        {itemsExpanded && (
           <motion.div
             variants={expandCollapse}
             initial="hidden"
@@ -269,6 +292,9 @@ function GoalRow({
             className="overflow-hidden"
           >
             <div className="mt-2 space-y-1.5 pl-1">
+              {!hasLinkedItems && (
+                <p className="text-[11px] text-orbital-text-faint">No tasks or habits linked yet.</p>
+              )}
               {goal.tasks.map((task) => (
                 <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
                   <span
@@ -288,6 +314,24 @@ function GoalRow({
                   <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates, habit.days_of_week)}d streak</span>
                 </div>
               ))}
+
+              <form onSubmit={handleAddTask} className="flex gap-1.5 pt-0.5">
+                <input
+                  type="text"
+                  placeholder="Add a task..."
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  className="flex-1 min-w-0 bg-cosmic-surface-3 border border-cosmic-border rounded-md px-2 py-1 text-[11px] text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+                />
+                <motion.button
+                  whileTap={tapScale}
+                  type="submit"
+                  disabled={addingTask || !newTaskTitle.trim()}
+                  className="bg-cosmic-surface-3 hover:bg-cosmic-border disabled:opacity-50 text-orbital-text-muted font-medium text-[11px] rounded-md px-2 py-1 transition-colors whitespace-nowrap"
+                >
+                  Add
+                </motion.button>
+              </form>
             </div>
           </motion.div>
         )}

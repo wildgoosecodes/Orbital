@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { useRoadmap } from '../../hooks/useRoadmap';
+import { useTasks } from '../../hooks/useTasks';
 import YearGoalCard from './YearGoalCard';
 
 interface RoadmapViewProps {
@@ -23,6 +24,7 @@ export default function RoadmapView({ userId }: RoadmapViewProps) {
     removeMilestone,
     removeGoal,
   } = useRoadmap(userId);
+  const { addTask } = useTasks(userId);
 
   const [title, setTitle] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
@@ -94,6 +96,7 @@ export default function RoadmapView({ userId }: RoadmapViewProps) {
             onAddMilestone={addMilestone}
             onRemoveYearGoal={removeYearGoal}
             onAddGoal={addGoal}
+            onAddTask={addTask}
             onUpdateGoalProgress={updateGoalProgress}
             onUpdateMilestoneStatus={updateMilestoneStatus}
             onRemoveMilestone={removeMilestone}

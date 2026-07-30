@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Goal, TaskPriority } from '../../types/database';
 import { tapScale } from '../../lib/motion';
+import { categoryColor } from '../../lib/categoryColor';
 
 interface TaskFormProps {
   onSubmit: (input: NewTaskInput) => Promise<void>;
@@ -77,14 +78,22 @@ export default function TaskForm({ onSubmit, goals, categories }: TaskFormProps)
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="text"
-          list="task-form-category-options"
-          placeholder="Category (e.g. Work, Personal) — optional, helps filtering"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1"
-        />
+        <div className="relative flex-1">
+          {category.trim() && (
+            <span
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
+              style={{ backgroundColor: categoryColor(category) }}
+            />
+          )}
+          <input
+            type="text"
+            list="task-form-category-options"
+            placeholder="Category (e.g. Work, Personal) — optional, helps filtering"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={`w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 ${category.trim() ? 'pl-7 pr-3' : 'px-3'}`}
+          />
+        </div>
         <datalist id="task-form-category-options">
           {categories.map((c) => (
             <option key={c} value={c} />

@@ -6,6 +6,7 @@ import { CalendarDays, Milestone } from 'lucide-react';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Goal, Task, TaskPriority } from '../../types/database';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
+import { categoryColor } from '../../lib/categoryColor';
 
 interface TaskItemProps {
   task: Task;
@@ -107,14 +108,22 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete, goals
             onChange={(e) => setDueDate(e.target.value)}
             className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
           />
-          <input
-            type="text"
-            list="task-category-options"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
-            className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-          />
+          <div className="relative flex-1">
+            {category.trim() && (
+              <span
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
+                style={{ backgroundColor: categoryColor(category) }}
+              />
+            )}
+            <input
+              type="text"
+              list="task-category-options"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category"
+              className={`w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1 ${category.trim() ? 'pl-7 pr-3' : 'px-3'}`}
+            />
+          </div>
           <datalist id="task-category-options">
             {categories.map((c) => (
               <option key={c} value={c} />
@@ -198,7 +207,12 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete, goals
         <div className="mt-0.5 flex items-center gap-2 flex-wrap">
           {task.due_date && <span className="text-xs text-orbital-text-faint">Due {task.due_date}</span>}
           {task.category && (
-            <span className="text-[11px] text-orbital-text-muted bg-cosmic-surface-3 px-1.5 py-0.5 rounded">{task.category}</span>
+            <span
+              className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+              style={{ backgroundColor: `${categoryColor(task.category)}1a`, color: categoryColor(task.category) }}
+            >
+              {task.category}
+            </span>
           )}
           {goalTitle && (
             <span className="flex items-center gap-1 text-[11px] text-orbital-accent-2/80 truncate">

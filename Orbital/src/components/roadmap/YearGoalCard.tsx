@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
 import type { YearGoalWithMilestones } from '../../hooks/useRoadmap';
 import type { NewMilestoneInput, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
+import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Milestone } from '../../types/database';
 import MilestoneNode from './MilestoneNode';
 import { tapScale } from '../../lib/motion';
@@ -13,6 +14,7 @@ interface YearGoalCardProps {
   onAddMilestone: (input: NewMilestoneInput, position: number) => Promise<void>;
   onRemoveYearGoal: (id: string) => Promise<void>;
   onAddGoal: (input: NewRoadmapGoalInput) => Promise<void>;
+  onAddTask: (input: NewTaskInput) => Promise<void>;
   onUpdateGoalProgress: (id: string, progress: number) => Promise<void>;
   onUpdateMilestoneStatus: (id: string, status: Milestone['status']) => Promise<void>;
   onRemoveMilestone: (id: string) => Promise<void>;
@@ -30,6 +32,7 @@ export default function YearGoalCard({
   onAddMilestone,
   onRemoveYearGoal,
   onAddGoal,
+  onAddTask,
   onUpdateGoalProgress,
   onUpdateMilestoneStatus,
   onRemoveMilestone,
@@ -103,6 +106,7 @@ export default function YearGoalCard({
               milestone={milestone}
               isLast={i === yearGoal.milestones.length - 1}
               onAddGoal={onAddGoal}
+              onAddTask={onAddTask}
               onUpdateGoalProgress={onUpdateGoalProgress}
               onUpdateStatus={onUpdateMilestoneStatus}
               onRemoveMilestone={onRemoveMilestone}

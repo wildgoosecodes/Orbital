@@ -5,6 +5,7 @@ import type { Task, TaskStatus } from '../../types/database';
 import type { Tab } from '../../lib/navTabs';
 import { calculateStreak, todayStr } from '../../lib/habitStreak';
 import { cardHover, hoverScale, listItem, listItemTransition, tapScale } from '../../lib/motion';
+import { categoryColor } from '../../lib/categoryColor';
 import { useDayOverview } from '../../hooks/useDayOverview';
 
 interface TodaysAgendaCardProps {
@@ -140,7 +141,12 @@ export default function TodaysAgendaCard({
                       {task.priority}
                     </span>
                     {task.category && (
-                      <span className="text-[11px] text-orbital-text-faint">{task.category}</span>
+                      <span
+                        className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+                        style={{ backgroundColor: `${categoryColor(task.category)}1a`, color: categoryColor(task.category) }}
+                      >
+                        {task.category}
+                      </span>
                     )}
                     {goalTitle && (
                       <span className="flex items-center gap-1 text-[11px] text-orbital-accent-2/80 truncate">
