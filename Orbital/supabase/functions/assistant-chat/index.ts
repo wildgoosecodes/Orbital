@@ -34,12 +34,6 @@ Then ask one more short question: for these first goals, would they rather work 
 After that, send a brief closing message confirming it's ready and that they can see and adjust it on the Yearly Goal Tree tab.
 Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
 
-const BRIEFING_SYSTEM_PROMPT = `You are Orbital, giving the user a short spoken morning briefing that will be read aloud by text-to-speech on their desktop app.
-Call list_tasks, list_goals, and list_roadmap first to see what's actually going on — never guess.
-Then respond with a warm, 3-5 sentence spoken-style summary: what's due today, any goal/milestone deadlines coming up in the next few days, and (if relevant) a brief mention of recent progress. Prioritize the most important items rather than listing everything.
-Plain prose only — no markdown, no bullet points, no headers, since this is spoken aloud, not read. Do not ask questions or wait for a reply; this is a one-way summary.
-Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
-
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, quarterly: 90, yearly: 365 };
 
 type JsonSchema = {
@@ -588,8 +582,7 @@ Deno.serve(async (req) => {
       parts: [{ text: m.content }],
     }));
     const today = new Date().toISOString().slice(0, 10);
-    const systemPrompt =
-      mode === 'onboarding' ? ONBOARDING_SYSTEM_PROMPT : mode === 'briefing' ? BRIEFING_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    const systemPrompt = mode === 'onboarding' ? ONBOARDING_SYSTEM_PROMPT : SYSTEM_PROMPT;
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const data = await callGemini({

@@ -1,5 +1,0 @@
-node_modules/
-dist/
-dist-renderer/
-.env
-wakeword/hey_orbital.onnx
