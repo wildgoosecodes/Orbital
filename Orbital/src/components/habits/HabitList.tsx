@@ -17,10 +17,10 @@ export default function HabitList({ userId }: HabitListProps) {
       <HabitForm onSubmit={addHabit} />
 
       {error && <p className="text-sm text-rose-400">{error}</p>}
-      {loading && <p className="text-sm text-slate-500">Loading habits...</p>}
+      {loading && <p className="text-sm text-orbital-text-faint">Loading habits...</p>}
 
       {!loading && habits.length === 0 && (
-        <p className="text-sm text-slate-500 p-4">No habits yet — add one above.</p>
+        <p className="text-sm text-orbital-text-faint p-4">No habits yet — add one above.</p>
       )}
 
       <div className="space-y-2">

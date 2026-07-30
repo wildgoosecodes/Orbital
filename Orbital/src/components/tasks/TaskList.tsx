@@ -40,10 +40,10 @@ export default function TaskList({ userId }: TaskListProps) {
       <TaskForm onSubmit={addTask} />
 
       {error && <p className="text-sm text-rose-400">{error}</p>}
-      {loading && <p className="text-sm text-slate-500">Loading tasks...</p>}
+      {loading && <p className="text-sm text-orbital-text-faint">Loading tasks...</p>}
 
       {!loading && tasks.length === 0 && (
-        <p className="text-sm text-slate-500 p-4">No tasks yet — add one above.</p>
+        <p className="text-sm text-orbital-text-faint p-4">No tasks yet — add one above.</p>
       )}
 
       <div className="space-y-2">

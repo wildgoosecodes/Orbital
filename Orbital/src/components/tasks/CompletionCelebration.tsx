@@ -53,7 +53,7 @@ export default function CompletionCelebration({
                 <Particle key={i} index={i} />
               ))}
             </div>
-            <div className="mt-2 bg-slate-900 border border-emerald-500/40 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full shadow-lg shadow-emerald-500/10 whitespace-nowrap">
+            <div className="mt-2 bg-cosmic-surface-2 border border-emerald-500/40 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full shadow-lg shadow-emerald-500/10 whitespace-nowrap">
               {message}
             </div>
           </motion.div>

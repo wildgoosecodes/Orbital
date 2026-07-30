@@ -26,18 +26,18 @@ export default function HabitForm({ onSubmit }: HabitFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 p-4 bg-slate-950 border border-slate-800 rounded-xl">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <input
         type="text"
         placeholder="Add a habit..."
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+        className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
       />
       <select
         value={frequency}
         onChange={(e) => setFrequency(e.target.value as HabitFrequency)}
-        className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+        className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
       >
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
@@ -45,7 +45,7 @@ export default function HabitForm({ onSubmit }: HabitFormProps) {
       <button
         type="submit"
         disabled={submitting || !name.trim()}
-        className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
+        className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
       >
         Add habit
       </button>
