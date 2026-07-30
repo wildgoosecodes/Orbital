@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 interface GoalProgressCardProps {
   title: string;
   progress: number;
@@ -14,7 +16,12 @@ export default function GoalProgressCard({ title, progress, target }: GoalProgre
         <span className="text-orbital-accent-2 font-semibold">{safeProgress}%</span>
       </div>
       <div className="mt-3 h-2 rounded-full bg-cosmic-surface-3 overflow-hidden">
-        <div className="h-full rounded-full bg-orbital-accent-1" style={{ width: `${safeProgress}%` }} />
+        <motion.div
+          className="h-full rounded-full bg-orbital-accent-1"
+          initial={{ width: 0 }}
+          animate={{ width: `${safeProgress}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
       </div>
       <p className="mt-2 text-xs text-orbital-text-faint">Target: {target}</p>
     </div>

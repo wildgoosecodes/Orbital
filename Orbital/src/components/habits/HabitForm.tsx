@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import type { NewHabitInput } from '../../hooks/useHabits';
 import type { HabitFrequency } from '../../types/database';
+import { tapScale } from '../../lib/motion';
 
 interface HabitFormProps {
   onSubmit: (input: NewHabitInput) => Promise<void>;
@@ -42,13 +44,14 @@ export default function HabitForm({ onSubmit }: HabitFormProps) {
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
       </select>
-      <button
+      <motion.button
+        whileTap={tapScale}
         type="submit"
         disabled={submitting || !name.trim()}
         className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
       >
         Add habit
-      </button>
+      </motion.button>
     </form>
   );
 }

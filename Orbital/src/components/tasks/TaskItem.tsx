@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarPlus } from 'lucide-react';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Task, TaskPriority } from '../../types/database';
 import { googleCalendarUrl } from '../../lib/googleCalendar';
+import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
 
 interface TaskItemProps {
   task: Task;
@@ -58,7 +59,13 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
 
   if (editing) {
     return (
-      <form
+      <motion.form
+        layout
+        variants={listItem}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        transition={listItemTransition}
         onSubmit={handleSave}
         className="p-4 bg-cosmic-surface-2 border border-orbital-accent-1/50 rounded-xl space-y-3"
       >
@@ -102,27 +109,38 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
           />
         </div>
         <div className="flex items-center gap-2 justify-end">
-          <button
+          <motion.button
+            whileTap={tapScale}
             type="button"
             onClick={() => setEditing(false)}
             className="text-sm text-orbital-text-muted hover:text-orbital-text px-3 py-2"
           >
             Cancel
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileTap={tapScale}
             type="submit"
             disabled={saving || !title.trim()}
             className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors"
           >
             {saving ? 'Saving...' : 'Save'}
-          </button>
+          </motion.button>
         </div>
-      </form>
+      </motion.form>
     );
   }
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
+    <motion.div
+      layout
+      variants={listItem}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      transition={listItemTransition}
+      whileHover={cardHover}
+      className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl"
+    >
       <button
         onClick={() => onToggleDone(task)}
         aria-label={done ? 'Mark as not done' : 'Mark as done'}
@@ -130,21 +148,24 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
           done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
         }`}
       >
-        {done && (
-          <motion.svg
-            width="10"
-            height="10"
-            viewBox="0 0 10 10"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-          >
-            <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-          </motion.svg>
-        )}
+        <AnimatePresence>
+          {done && (
+            <motion.svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+            >
+              <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
+            </motion.svg>
+          )}
+        </AnimatePresence>
       </button>
 
       <button onClick={startEditing} className="flex-1 min-w-0 text-left">
@@ -168,7 +189,8 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
         </a>
       )}
 
-      <button
+      <motion.button
+        whileTap={tapScale}
         onClick={startEditing}
         aria-label="Edit task"
         className="text-orbital-text-faint hover:text-orbital-accent-2 p-1"
@@ -176,9 +198,10 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M11.5 2.5a1.5 1.5 0 0 1 2.12 2.12L5.5 12.75l-3 .75.75-3 8.25-8z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
+      </motion.button>
 
-      <button
+      <motion.button
+        whileTap={tapScale}
         onClick={() => {
           if (window.confirm(`Delete "${task.title}"? This can't be undone.`)) onDelete(task.id);
         }}
@@ -188,7 +211,7 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

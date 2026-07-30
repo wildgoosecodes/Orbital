@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { CheckSquare, Flame, ListTodo, TrendingUp } from 'lucide-react';
 import StatCard from '../cards/StatCard';
 import CircularProgress from '../charts/CircularProgress';
@@ -16,6 +17,7 @@ import { useGoals } from '../../hooks/useGoals';
 import { useEvents } from '../../hooks/useEvents';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { todayStr } from '../../lib/habitStreak';
+import { fadeInUp, fadeInUpTransition, staggerContainer } from '../../lib/motion';
 import {
   displayNameFromEmail,
   countOpenTasks,
@@ -68,12 +70,23 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         onNewGoal={() => onNavigate('roadmap')}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeInUp}
+        transition={fadeInUpTransition}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      >
         <WeatherCard city={profile?.city ?? null} />
         <UpcomingEventsCard events={events} loading={eventsLoading} onNavigate={onNavigate} />
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={staggerContainer}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         <StatCard
           icon={CheckSquare}
           label="Tasks Completed"
@@ -102,10 +115,17 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
           value={habitsLoading ? '—' : `${currentStreak} day${currentStreak === 1 ? '' : 's'}`}
           delta={habitsLoading ? undefined : `Best: ${bestStreak} day${bestStreak === 1 ? '' : 's'}`}
           accentColor="#f59e0b"
+          pulse={!habitsLoading && currentStreak > 0}
         />
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeInUp}
+        transition={fadeInUpTransition}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      >
         <div className="lg:col-span-2">
           <TodaysTasksCard
             tasks={tasks}
@@ -120,14 +140,21 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
           <QuickActionsCard onNavigate={onNavigate} />
           <RecentActivityCard tasks={tasks} habits={habits} loading={tasksLoading || habitsLoading} />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-80px' }}
+        variants={fadeInUp}
+        transition={fadeInUpTransition}
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      >
         <div className="lg:col-span-2">
           <WeeklyProgressChart data={last7Days} />
         </div>
         <ConsistencyHeatmap habits={habits} loading={habitsLoading} />
-      </div>
+      </motion.div>
     </div>
   );
 }

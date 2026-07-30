@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { TaskPriority } from '../../types/database';
+import { tapScale } from '../../lib/motion';
 
 interface TaskFormProps {
   onSubmit: (input: NewTaskInput) => Promise<void>;
@@ -51,13 +53,14 @@ export default function TaskForm({ onSubmit }: TaskFormProps) {
         onChange={(e) => setDueDate(e.target.value)}
         className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
       />
-      <button
+      <motion.button
+        whileTap={tapScale}
         type="submit"
         disabled={submitting || !title.trim()}
         className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
       >
         Add task
-      </button>
+      </motion.button>
     </form>
   );
 }

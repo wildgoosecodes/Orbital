@@ -6,6 +6,7 @@ import type { YearGoalWithMilestones } from '../../hooks/useRoadmap';
 import type { NewMilestoneInput, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
 import type { Milestone } from '../../types/database';
 import MilestoneNode from './MilestoneNode';
+import { tapScale } from '../../lib/motion';
 
 interface YearGoalCardProps {
   yearGoal: YearGoalWithMilestones;
@@ -62,7 +63,8 @@ export default function YearGoalCard({
             <p className="text-xs text-orbital-text-faint">{yearGoal.year} · {progress}% of the way there</p>
           </div>
         </div>
-        <button
+        <motion.button
+          whileTap={tapScale}
           onClick={() => {
             if (window.confirm(`Delete "${yearGoal.title}" and all its milestones and goals? This can't be undone.`)) {
               onRemoveYearGoal(yearGoal.id);
@@ -74,11 +76,16 @@ export default function YearGoalCard({
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </button>
+        </motion.button>
       </div>
 
       <div className="mt-3 h-1.5 rounded-full bg-cosmic-surface-3 overflow-hidden">
-        <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+        <motion.div
+          className="h-full rounded-full bg-emerald-500"
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
       </div>
 
       <div className="mt-6 space-y-3">
@@ -113,13 +120,14 @@ export default function YearGoalCard({
           onChange={(e) => setMilestoneTitle(e.target.value)}
           className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
         />
-        <button
+        <motion.button
+          whileTap={tapScale}
           type="submit"
           disabled={submitting || !milestoneTitle.trim()}
           className="bg-cosmic-surface-3 hover:bg-cosmic-border disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
         >
           Add milestone
-        </button>
+        </motion.button>
       </form>
     </div>
   );

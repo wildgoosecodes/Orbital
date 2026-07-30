@@ -1,6 +1,8 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { Milestone } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
 import { calculateStreak, todayStr } from '../../lib/habitStreak';
+import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
 
 interface HabitItemProps {
   habit: HabitWithLogs;
@@ -14,7 +16,16 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
   const streak = calculateStreak(habit.completedDates);
 
   return (
-    <div className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
+    <motion.div
+      layout
+      variants={listItem}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      transition={listItemTransition}
+      whileHover={cardHover}
+      className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl"
+    >
       <button
         onClick={() => onToggleToday(habit)}
         aria-label={doneToday ? 'Unmark today' : 'Mark done for today'}
@@ -22,11 +33,24 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
           doneToday ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
         }`}
       >
-        {doneToday && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2">
-            <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+        <AnimatePresence>
+          {doneToday && (
+            <motion.svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+            >
+              <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
+            </motion.svg>
+          )}
+        </AnimatePresence>
       </button>
 
       <div className="flex-1 min-w-0">
@@ -44,7 +68,8 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
         {streak} day{streak === 1 ? '' : 's'}
       </span>
 
-      <button
+      <motion.button
+        whileTap={tapScale}
         onClick={() => {
           if (window.confirm(`Delete "${habit.name}" and its whole history? This can't be undone.`)) onDelete(habit.id);
         }}
@@ -54,7 +79,7 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

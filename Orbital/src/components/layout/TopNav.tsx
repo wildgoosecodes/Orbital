@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, Menu, Pencil, X } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
@@ -7,6 +8,7 @@ import WhatsNewTrigger from '../changelog/WhatsNewTrigger';
 import NotificationToggle from '../notifications/NotificationToggle';
 import EditProfileModal from '../profile/EditProfileModal';
 import { TABS, TAB_PATHS } from '../../lib/navTabs';
+import { dropdownTransition, dropdownVariants, tapScale } from '../../lib/motion';
 import type { Profile } from '../../types/database';
 
 interface TopNavProps {
@@ -16,13 +18,6 @@ interface TopNavProps {
   onUpdateProfile: (updates: { display_name: string; city: string | null }) => Promise<void>;
   onSignOut: () => void;
 }
-
-const pillClass = ({ isActive }: { isActive: boolean }) =>
-  `px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-    isActive
-      ? 'bg-gradient-to-br from-orbital-accent-2 to-orbital-accent-1 text-cosmic-bg'
-      : 'text-orbital-text-muted hover:text-orbital-text'
-  }`;
 
 const mobilePillClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -61,8 +56,28 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
 
         <nav className="hidden md:flex items-center gap-0.5 bg-cosmic-surface-2 border border-cosmic-border rounded-full p-1">
           {TABS.filter((t) => !t.xlHidden).map(({ tab, label }) => (
-            <NavLink key={tab} to={TAB_PATHS[tab]} end={tab === 'overview'} className={pillClass}>
-              {label}
+            <NavLink
+              key={tab}
+              to={TAB_PATHS[tab]}
+              end={tab === 'overview'}
+              className="relative px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap"
+            >
+              {({ isActive }) => (
+                <motion.span whileTap={tapScale} className="relative block">
+                  {isActive && (
+                    <motion.span
+                      layoutId="activePill"
+                      className="absolute inset-0 rounded-full bg-gradient-to-br from-orbital-accent-2 to-orbital-accent-1"
+                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    />
+                  )}
+                  <span
+                    className={`relative transition-colors ${isActive ? 'text-cosmic-bg' : 'text-orbital-text-muted hover:text-orbital-text'}`}
+                  >
+                    {label}
+                  </span>
+                </motion.span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -71,69 +86,89 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
           <NotificationToggle userId={userId} />
 
           <div className="relative" ref={avatarRef}>
-            <button
+            <motion.button
+              whileTap={tapScale}
               onClick={() => setAvatarOpen((v) => !v)}
               aria-label="Account menu"
               className="w-9 h-9 rounded-full bg-gradient-to-br from-orbital-accent-1 to-orbital-accent-2 flex items-center justify-center text-xs font-bold text-cosmic-bg"
             >
               {initials}
-            </button>
+            </motion.button>
 
-            {avatarOpen && (
-              <div className="absolute right-0 top-11 z-50 w-56 bg-cosmic-surface-2 border border-cosmic-border rounded-xl shadow-2xl py-2">
-                <div className="px-3.5 py-2 border-b border-cosmic-border-soft mb-1">
-                  {displayName && <p className="text-sm font-semibold text-orbital-text truncate">{displayName}</p>}
-                  <p className="text-xs text-orbital-text-faint truncate">{userEmail}</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setEditOpen(true);
-                    setAvatarOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3.5 py-2 text-sm text-orbital-text-muted hover:bg-cosmic-surface-3 hover:text-orbital-text"
+            <AnimatePresence>
+              {avatarOpen && (
+                <motion.div
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={dropdownTransition}
+                  className="absolute right-0 top-11 z-50 w-56 bg-cosmic-surface-2 border border-cosmic-border rounded-xl shadow-2xl py-2"
                 >
-                  <Pencil size={15} strokeWidth={2} />
-                  Edit profile
-                </button>
+                  <div className="px-3.5 py-2 border-b border-cosmic-border-soft mb-1">
+                    {displayName && <p className="text-sm font-semibold text-orbital-text truncate">{displayName}</p>}
+                    <p className="text-xs text-orbital-text-faint truncate">{userEmail}</p>
+                  </div>
 
-                <WhatsNewTrigger
-                  onOpen={() => {
-                    setWhatsNewOpen(true);
-                    setAvatarOpen(false);
-                  }}
-                />
+                  <button
+                    onClick={() => {
+                      setEditOpen(true);
+                      setAvatarOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2 text-sm text-orbital-text-muted hover:bg-cosmic-surface-3 hover:text-orbital-text"
+                  >
+                    <Pencil size={15} strokeWidth={2} />
+                    Edit profile
+                  </button>
 
-                <button
-                  onClick={onSignOut}
-                  className="w-full flex items-center gap-3 px-3.5 py-2 text-sm text-orbital-text-muted hover:bg-cosmic-surface-3 hover:text-orbital-accent-2"
-                >
-                  <LogOut size={15} strokeWidth={2} />
-                  Sign out
-                </button>
-              </div>
-            )}
+                  <WhatsNewTrigger
+                    onOpen={() => {
+                      setWhatsNewOpen(true);
+                      setAvatarOpen(false);
+                    }}
+                  />
+
+                  <button
+                    onClick={onSignOut}
+                    className="w-full flex items-center gap-3 px-3.5 py-2 text-sm text-orbital-text-muted hover:bg-cosmic-surface-3 hover:text-orbital-accent-2"
+                  >
+                    <LogOut size={15} strokeWidth={2} />
+                    Sign out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          <button
+          <motion.button
+            whileTap={tapScale}
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             className="md:hidden w-9 h-9 rounded-full bg-cosmic-surface-2 border border-cosmic-border flex items-center justify-center text-orbital-text-muted flex-shrink-0"
           >
             {mobileOpen ? <X size={17} strokeWidth={2} /> : <Menu size={17} strokeWidth={2} />}
-          </button>
+          </motion.button>
         </div>
       </div>
 
-      {mobileOpen && (
-        <nav className="md:hidden px-4 pb-3 space-y-1">
-          {TABS.map(({ tab, label }) => (
-            <NavLink key={tab} to={TAB_PATHS[tab]} end={tab === 'overview'} onClick={() => setMobileOpen(false)} className={mobilePillClass}>
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.nav
+            variants={dropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={dropdownTransition}
+            className="md:hidden px-4 pb-3 space-y-1"
+          >
+            {TABS.map(({ tab, label }) => (
+              <NavLink key={tab} to={TAB_PATHS[tab]} end={tab === 'overview'} onClick={() => setMobileOpen(false)} className={mobilePillClass}>
+                {label}
+              </NavLink>
+            ))}
+          </motion.nav>
+        )}
+      </AnimatePresence>
 
       <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} profile={profile} userEmail={userEmail} onSave={onUpdateProfile} />
       <WhatsNewModal open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />

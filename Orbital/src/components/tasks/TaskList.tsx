@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useTasks } from '../../hooks/useTasks';
 import type { Task } from '../../types/database';
 import TaskForm from './TaskForm';
@@ -47,9 +48,11 @@ export default function TaskList({ userId }: TaskListProps) {
       )}
 
       <div className="space-y-2">
-        {tasks.map((task) => (
-          <TaskItem key={task.id} task={task} onToggleDone={handleToggleDone} onUpdate={updateTask} onDelete={removeTask} />
-        ))}
+        <AnimatePresence initial={false}>
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} onToggleDone={handleToggleDone} onUpdate={updateTask} onDelete={removeTask} />
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );

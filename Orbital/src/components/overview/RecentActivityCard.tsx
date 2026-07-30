@@ -1,7 +1,9 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { CheckSquare, Repeat2 } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
 import type { Task } from '../../types/database';
 import { formatRelativeTime, recentActivity } from '../../lib/overviewStats';
+import { cardHover, listItem, listItemTransition } from '../../lib/motion';
 
 interface RecentActivityCardProps {
   tasks: Task[];
@@ -13,7 +15,7 @@ export default function RecentActivityCard({ tasks, habits, loading }: RecentAct
   const items = recentActivity(tasks, habits);
 
   return (
-    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
+    <motion.div whileHover={cardHover} className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <h3 className="text-sm font-semibold text-orbital-text">Recent Activity</h3>
 
       <div className="mt-4 space-y-2">
@@ -22,20 +24,31 @@ export default function RecentActivityCard({ tasks, habits, loading }: RecentAct
           <p className="text-sm text-orbital-text-faint">Complete a task or habit to see it here.</p>
         )}
 
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center gap-3 p-2.5 bg-cosmic-surface-3/60 rounded-lg">
-            <span
-              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                item.kind === 'task' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orbital-accent-1/10 text-orbital-accent-2'
-              }`}
+        <AnimatePresence initial={false}>
+          {items.map((item) => (
+            <motion.div
+              key={item.id}
+              layout
+              variants={listItem}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={listItemTransition}
+              className="flex items-center gap-3 p-2.5 bg-cosmic-surface-3/60 rounded-lg"
             >
-              {item.kind === 'task' ? <CheckSquare size={14} strokeWidth={2} /> : <Repeat2 size={14} strokeWidth={2} />}
-            </span>
-            <p className="flex-1 min-w-0 text-sm text-orbital-text truncate">{item.title}</p>
-            <span className="flex-shrink-0 text-[11px] text-orbital-text-faint">{formatRelativeTime(item.at)}</span>
-          </div>
-        ))}
+              <span
+                className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  item.kind === 'task' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-orbital-accent-1/10 text-orbital-accent-2'
+                }`}
+              >
+                {item.kind === 'task' ? <CheckSquare size={14} strokeWidth={2} /> : <Repeat2 size={14} strokeWidth={2} />}
+              </span>
+              <p className="flex-1 min-w-0 text-sm text-orbital-text truncate">{item.title}</p>
+              <span className="flex-shrink-0 text-[11px] text-orbital-text-faint">{formatRelativeTime(item.at)}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

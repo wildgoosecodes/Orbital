@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion';
 import { useHabits } from '../../hooks/useHabits';
 import { useGoals } from '../../hooks/useGoals';
 import HabitForm from './HabitForm';
@@ -24,15 +25,17 @@ export default function HabitList({ userId }: HabitListProps) {
       )}
 
       <div className="space-y-2">
-        {habits.map((habit) => (
-          <HabitItem
-            key={habit.id}
-            habit={habit}
-            onToggleToday={toggleToday}
-            onDelete={removeHabit}
-            goalTitle={habit.goal_id ? goalTitleById.get(habit.goal_id) : undefined}
-          />
-        ))}
+        <AnimatePresence initial={false}>
+          {habits.map((habit) => (
+            <HabitItem
+              key={habit.id}
+              habit={habit}
+              onToggleToday={toggleToday}
+              onDelete={removeHabit}
+              goalTitle={habit.goal_id ? goalTitleById.get(habit.goal_id) : undefined}
+            />
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );

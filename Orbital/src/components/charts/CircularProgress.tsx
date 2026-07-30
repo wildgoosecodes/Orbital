@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 interface CircularProgressProps {
   percent: number;
   size?: number;
@@ -11,7 +13,7 @@ export default function CircularProgress({
   size = 40,
   strokeWidth = 4,
   color,
-  trackColor = '#1e293b',
+  trackColor = '#22232f',
 }: CircularProgressProps) {
   const clamped = Math.min(100, Math.max(0, percent));
   const radius = (size - strokeWidth) / 2;
@@ -22,7 +24,7 @@ export default function CircularProgress({
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
       <circle cx={center} cy={center} r={radius} stroke={trackColor} strokeWidth={strokeWidth} fill="none" />
-      <circle
+      <motion.circle
         cx={center}
         cy={center}
         r={radius}
@@ -30,7 +32,9 @@ export default function CircularProgress({
         strokeWidth={strokeWidth}
         fill="none"
         strokeDasharray={circumference}
-        strokeDashoffset={offset}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
         strokeLinecap="round"
       />
     </svg>

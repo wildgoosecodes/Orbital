@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import type { NewEventInput } from '../../hooks/useEvents';
 import type { Event } from '../../types/database';
+import { tapScale } from '../../lib/motion';
 
 interface EventFormProps {
   initialEvent?: Event;
@@ -167,21 +169,23 @@ export default function EventForm({ initialEvent, defaultDate, onSubmit, onCance
 
       <div className="flex items-center gap-2 justify-end">
         {onCancel && (
-          <button
+          <motion.button
+            whileTap={tapScale}
             type="button"
             onClick={onCancel}
             className="text-sm text-orbital-text-muted hover:text-orbital-text px-3 py-2"
           >
             Cancel
-          </button>
+          </motion.button>
         )}
-        <button
+        <motion.button
+          whileTap={tapScale}
           type="submit"
           disabled={submitting || !title.trim()}
           className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
         >
           {submitting ? 'Saving...' : initialEvent ? 'Save' : 'Add event'}
-        </button>
+        </motion.button>
       </div>
     </form>
   );

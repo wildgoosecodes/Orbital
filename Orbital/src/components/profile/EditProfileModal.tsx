@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { User, X } from 'lucide-react';
 import type { Profile } from '../../types/database';
+import { tapScale } from '../../lib/motion';
 
 interface EditProfileModalProps {
   open: boolean;
@@ -104,19 +105,21 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
               {error && <p className="text-sm text-rose-400">{error}</p>}
 
               <div className="flex items-center justify-end gap-2 pt-1">
-                <button
+                <motion.button
+                  whileTap={tapScale}
                   onClick={onClose}
                   className="text-sm font-semibold text-orbital-text-muted hover:text-orbital-text px-3 py-2 rounded-lg hover:bg-cosmic-surface-3"
                 >
                   Cancel
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileTap={tapScale}
                   onClick={handleSave}
                   disabled={saving}
                   className="text-sm font-semibold text-orbital-text bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 px-4 py-2 rounded-lg"
                 >
                   {saving ? 'Saving…' : 'Save'}
-                </button>
+                </motion.button>
               </div>
             </div>
           </motion.div>

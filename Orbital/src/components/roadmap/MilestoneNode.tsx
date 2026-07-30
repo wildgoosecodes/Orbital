@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { GoalWithItems, MilestoneWithGoals, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
 import type { GoalPeriodType, Milestone } from '../../types/database';
 import { calculateStreak } from '../../lib/habitStreak';
+import { expandCollapse, expandCollapseTransition, tapScale } from '../../lib/motion';
 
 interface MilestoneNodeProps {
   milestone: MilestoneWithGoals;
@@ -104,46 +105,63 @@ export default function MilestoneNode({
 
           {milestone.goals.length > 0 && (
             <div className="mt-2 h-1 rounded-full bg-cosmic-surface-3 overflow-hidden">
-              <div className="h-full rounded-full bg-orbital-accent-1 transition-all duration-500" style={{ width: `${progress}%` }} />
+              <motion.div
+                className="h-full rounded-full bg-orbital-accent-1"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+              />
             </div>
           )}
 
-          {expanded && (
-            <div className="mt-3 space-y-2">
-              {milestone.goals.length === 0 && (
-                <p className="text-xs text-orbital-text-faint">No goals yet — add one below.</p>
-              )}
-              {milestone.goals.map((goal) => (
-                <GoalRow key={goal.id} goal={goal} onUpdateProgress={onUpdateGoalProgress} onDelete={onRemoveGoal} />
-              ))}
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                variants={expandCollapse}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={expandCollapseTransition}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 space-y-2">
+                  {milestone.goals.length === 0 && (
+                    <p className="text-xs text-orbital-text-faint">No goals yet — add one below.</p>
+                  )}
+                  {milestone.goals.map((goal) => (
+                    <GoalRow key={goal.id} goal={goal} onUpdateProgress={onUpdateGoalProgress} onDelete={onRemoveGoal} />
+                  ))}
 
-              <form onSubmit={handleAddGoal} className="flex flex-col sm:flex-row gap-2 pt-1">
-                <input
-                  type="text"
-                  placeholder="Add a goal..."
-                  value={goalTitle}
-                  onChange={(e) => setGoalTitle(e.target.value)}
-                  className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-                />
-                <select
-                  value={periodType}
-                  onChange={(e) => setPeriodType(e.target.value as GoalPeriodType)}
-                  className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-                >
-                  <option value="weekly">Weekly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
-                <button
-                  type="submit"
-                  disabled={submitting || !goalTitle.trim()}
-                  className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-xs rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
-                >
-                  Add goal
-                </button>
-              </form>
-            </div>
-          )}
+                  <form onSubmit={handleAddGoal} className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Add a goal..."
+                      value={goalTitle}
+                      onChange={(e) => setGoalTitle(e.target.value)}
+                      className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+                    />
+                    <select
+                      value={periodType}
+                      onChange={(e) => setPeriodType(e.target.value as GoalPeriodType)}
+                      className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                    <motion.button
+                      whileTap={tapScale}
+                      type="submit"
+                      disabled={submitting || !goalTitle.trim()}
+                      className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-xs rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
+                    >
+                      Add goal
+                    </motion.button>
+                  </form>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -182,6 +200,7 @@ function GoalRow({
 
   return (
     <motion.div
+      layout
       animate={justCompleted ? { scale: [1, 1.04, 1] } : { scale: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className={`p-2.5 bg-cosmic-bg border rounded-lg ${justCompleted ? 'border-emerald-500/60' : 'border-cosmic-border'}`}
@@ -217,7 +236,12 @@ function GoalRow({
 
       {hasLinkedItems ? (
         <div className="mt-1.5 h-1.5 rounded-full bg-cosmic-surface-3 overflow-hidden">
-          <div className="h-full rounded-full bg-orbital-accent-1 transition-all duration-500" style={{ width: `${value}%` }} />
+          <motion.div
+            className="h-full rounded-full bg-orbital-accent-1"
+            initial={{ width: 0 }}
+            animate={{ width: `${value}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
         </div>
       ) : (
         <input
@@ -234,29 +258,40 @@ function GoalRow({
         />
       )}
 
-      {hasLinkedItems && itemsExpanded && (
-        <div className="mt-2 space-y-1.5 pl-1">
-          {goal.tasks.map((task) => (
-            <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
-              <span
-                className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                  task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                }`}
-              />
-              <span className={`truncate ${task.status === 'done' ? 'text-orbital-text-faint line-through' : 'text-orbital-text-muted'}`}>
-                {task.title}
-              </span>
+      <AnimatePresence initial={false}>
+        {hasLinkedItems && itemsExpanded && (
+          <motion.div
+            variants={expandCollapse}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={expandCollapseTransition}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 space-y-1.5 pl-1">
+              {goal.tasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
+                      task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
+                    }`}
+                  />
+                  <span className={`truncate ${task.status === 'done' ? 'text-orbital-text-faint line-through' : 'text-orbital-text-muted'}`}>
+                    {task.title}
+                  </span>
+                </div>
+              ))}
+              {goal.habits.map((habit) => (
+                <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orbital-accent-1/20 border border-orbital-accent-1/50 flex-shrink-0" />
+                  <span className="truncate text-orbital-text-muted">{habit.name}</span>
+                  <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates)}d streak</span>
+                </div>
+              ))}
             </div>
-          ))}
-          {goal.habits.map((habit) => (
-            <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
-              <span className="w-2.5 h-2.5 rounded-full bg-orbital-accent-1/20 border border-orbital-accent-1/50 flex-shrink-0" />
-              <span className="truncate text-orbital-text-muted">{habit.name}</span>
-              <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates)}d streak</span>
-            </div>
-          ))}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
