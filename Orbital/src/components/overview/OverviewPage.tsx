@@ -9,6 +9,7 @@ import QuickActionsCard from './QuickActionsCard';
 import WeatherCard from './WeatherCard';
 import UpcomingEventsCard from './UpcomingEventsCard';
 import RecentActivityCard from './RecentActivityCard';
+import MiniCalendarCard from './MiniCalendarCard';
 import CosmicHero from './CosmicHero';
 import ConsistencyHeatmap from './ConsistencyHeatmap';
 import { useTasks } from '../../hooks/useTasks';
@@ -130,7 +131,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         transition={fadeInUpTransition}
         className="grid grid-cols-1 lg:grid-cols-3 gap-4"
       >
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
           <TodaysTasksCard
             tasks={tasks}
             loading={tasksLoading}
@@ -138,6 +139,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
             onNavigate={onNavigate}
             goalTitleById={goalTitleById}
           />
+          <MiniCalendarCard tasks={tasks} events={events} onNavigate={onNavigate} />
         </div>
         <div className="space-y-4">
           <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />

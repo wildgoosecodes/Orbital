@@ -4,6 +4,7 @@ import { useTasks } from '../../hooks/useTasks';
 import { useEvents } from '../../hooks/useEvents';
 import { useGoogleCalendarImport } from '../../hooks/useGoogleCalendarImport';
 import { googleCalendarUrl, googleCalendarUrlForEvent } from '../../lib/googleCalendar';
+import { buildMonthGrid, dateKey } from '../../lib/calendarGrid';
 import EventForm from './EventForm';
 import type { Task, Event } from '../../types/database';
 
@@ -25,28 +26,6 @@ const PRIORITY_BADGE: Record<Task['priority'], string> = {
   medium: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   high: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
 };
-
-function dateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function buildMonthGrid(viewDate: Date): Date[] {
-  const firstOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-  const start = new Date(firstOfMonth);
-  start.setDate(start.getDate() - start.getDay());
-
-  const lastOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
-  const end = new Date(lastOfMonth);
-  end.setDate(end.getDate() + (6 - end.getDay()));
-
-  const days: Date[] = [];
-  const cursor = new Date(start);
-  while (cursor <= end) {
-    days.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return days;
-}
 
 export default function CalendarView({ userId }: CalendarViewProps) {
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
