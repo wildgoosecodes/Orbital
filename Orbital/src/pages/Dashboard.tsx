@@ -90,7 +90,15 @@ export default function Dashboard() {
             <Routes>
               <Route
                 index
-                element={<OverviewPage userId={userId} userEmail={userEmail} profile={profile} onNavigate={handleNavigate} />}
+                element={
+                  <OverviewPage
+                    userId={userId}
+                    userEmail={userEmail}
+                    profile={profile}
+                    onNavigate={handleNavigate}
+                    onOpenVoiceMode={() => setVoiceModeOpen(true)}
+                  />
+                }
               />
               <Route
                 path="assistant"

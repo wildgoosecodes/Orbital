@@ -7,12 +7,14 @@ import GoalsProgressCard from './GoalsProgressCard';
 import QuickActionsCard from './QuickActionsCard';
 import WeatherCard from './WeatherCard';
 import QuoteCard from './QuoteCard';
+import CosmicHero from './CosmicHero';
+import ConsistencyHeatmap from './ConsistencyHeatmap';
 import { useTasks } from '../../hooks/useTasks';
 import { useHabits } from '../../hooks/useHabits';
 import { useGoals } from '../../hooks/useGoals';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { todayStr } from '../../lib/habitStreak';
 import {
-  greetingForHour,
   displayNameFromEmail,
   countOpenTasks,
   completedTodayDelta,
@@ -28,9 +30,10 @@ interface OverviewPageProps {
   userEmail: string;
   profile: Profile | null;
   onNavigate: (tab: Tab) => void;
+  onOpenVoiceMode: () => void;
 }
 
-export default function OverviewPage({ userId, userEmail, profile, onNavigate }: OverviewPageProps) {
+export default function OverviewPage({ userId, userEmail, profile, onNavigate, onOpenVoiceMode }: OverviewPageProps) {
   const name =
     profile?.display_name && profile.display_name !== userEmail ? profile.display_name : displayNameFromEmail(userEmail);
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
@@ -45,15 +48,22 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate }:
   const productivityScore = weeklyProductivityScore(last7Days, openCount);
   const currentStreak = bestCurrentStreak(habits);
   const bestStreak = bestEverStreak(habits);
+  const todayHabits = habits.filter((h) => h.completedDates.includes(todayStr())).length;
+  const activeGoals = goals.filter((g) => g.status === 'active').length;
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold text-white">
-          {greetingForHour()}, {name} 👋
-        </h2>
-        <p className="text-sm text-slate-400">Here's what's happening with your productivity today.</p>
-      </div>
+      <CosmicHero
+        name={name}
+        weeklyProgress={productivityScore}
+        streak={currentStreak}
+        todayTasks={completedToday}
+        todayHabits={todayHabits}
+        todayGoals={activeGoals}
+        onOpenVoiceMode={onOpenVoiceMode}
+        onAddTask={() => onNavigate('tasks')}
+        onNewGoal={() => onNavigate('roadmap')}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <WeatherCard city={profile?.city ?? null} />
@@ -102,14 +112,17 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate }:
             goalTitleById={goalTitleById}
           />
         </div>
-        <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />
+        <div className="space-y-4">
+          <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />
+          <QuickActionsCard onNavigate={onNavigate} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <WeeklyProgressChart data={last7Days} />
         </div>
-        <QuickActionsCard onNavigate={onNavigate} />
+        <ConsistencyHeatmap habits={habits} loading={habitsLoading} />
       </div>
     </div>
   );
