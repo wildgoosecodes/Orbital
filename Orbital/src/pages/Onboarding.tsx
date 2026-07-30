@@ -73,22 +73,22 @@ export default function Onboarding() {
   const hasExchanged = messages.length > 1;
 
   return (
-    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col bg-slate-900 text-slate-100 px-4">
+    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col bg-cosmic-bg text-orbital-text px-4">
       <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <OrbitalMark size={26} />
-            <h1 className="text-xl font-bold tracking-wider text-white uppercase">Orbital</h1>
+            <h1 className="text-xl font-bold tracking-wider text-orbital-text uppercase">Orbital</h1>
           </div>
           <button
             onClick={finishOnboarding}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-300 border border-slate-800 rounded-lg px-3 py-1.5"
+            className="text-xs font-semibold text-orbital-text-faint hover:text-orbital-text-muted border border-cosmic-border rounded-lg px-3 py-1.5"
           >
             Skip for now
           </button>
         </div>
 
-        <div className="flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+        <div className="flex-1 flex flex-col bg-cosmic-surface-2 border border-cosmic-border rounded-xl overflow-hidden">
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[50vh]">
             <AnimatePresence initial={false}>
               {messages.map((m, i) => (
@@ -102,8 +102,8 @@ export default function Onboarding() {
                   <div
                     className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
                       m.role === 'user'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-900 border border-slate-800 text-slate-200'
+                        ? 'bg-orbital-accent-1 text-orbital-text'
+                        : 'bg-cosmic-surface-3 border border-cosmic-border text-orbital-text'
                     }`}
                   >
                     {m.content}
@@ -114,7 +114,7 @@ export default function Onboarding() {
 
             {sending && (
               <div className="flex justify-start">
-                <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-500">
+                <div className="bg-cosmic-surface-3 border border-cosmic-border rounded-xl px-4 py-2.5 text-sm text-orbital-text-faint">
                   Thinking…
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default function Onboarding() {
               <div className="flex justify-start pt-2">
                 <button
                   onClick={finishOnboarding}
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 bg-indigo-500/10 rounded-lg px-3 py-1.5"
+                  className="text-xs font-semibold text-orbital-accent-2 hover:text-orbital-accent-2/80 border border-orbital-accent-1/30 bg-orbital-accent-1/10 rounded-lg px-3 py-1.5"
                 >
                   View my roadmap →
                 </button>
@@ -140,19 +140,19 @@ export default function Onboarding() {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 border-t border-slate-800 flex items-center gap-2">
+          <form onSubmit={handleSubmit} className="p-4 border-t border-cosmic-border-soft flex items-center gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Tell Orbital about your year..."
               disabled={sending}
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+              className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2.5 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={sending || !input.trim()}
               aria-label="Send message"
-              className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg p-2.5 transition-colors"
+              className="flex-shrink-0 bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-40 text-orbital-text rounded-lg p-2.5 transition-colors"
             >
               <Send size={16} strokeWidth={2} />
             </button>

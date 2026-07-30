@@ -56,10 +56,10 @@ export default function ResetPasswordForm() {
 
   if (invalidLink) {
     return (
-      <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-slate-900 text-slate-100 px-4">
+      <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-cosmic-bg text-orbital-text px-4">
         <div className="w-full max-w-sm text-center">
-          <p className="text-slate-300">This reset link is invalid or has expired.</p>
-          <Link to="/forgot-password" className="mt-4 inline-block text-indigo-400 hover:text-indigo-300 text-sm">
+          <p className="text-orbital-text-muted">This reset link is invalid or has expired.</p>
+          <Link to="/forgot-password" className="mt-4 inline-block text-orbital-accent-2 hover:text-orbital-accent-2/80 text-sm">
             Request a new link
           </Link>
         </div>
@@ -69,26 +69,26 @@ export default function ResetPasswordForm() {
 
   if (done) {
     return (
-      <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-slate-900 text-slate-100 px-4">
+      <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-cosmic-bg text-orbital-text px-4">
         <div className="w-full max-w-sm text-center">
-          <p className="text-slate-300">Password updated — taking you to your dashboard...</p>
+          <p className="text-orbital-text-muted">Password updated — taking you to your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-slate-900 text-slate-100 px-4">
+    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center bg-cosmic-bg text-orbital-text px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center gap-3 justify-center">
           <OrbitalMark size={28} />
           <h1 className="text-2xl font-bold tracking-wider uppercase">Orbital</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-slate-950 border border-slate-800 rounded-xl p-6 space-y-4">
-          <p className="text-sm text-slate-400">Choose a new password.</p>
+        <form onSubmit={handleSubmit} className="bg-cosmic-surface-2 border border-cosmic-border rounded-xl p-6 space-y-4">
+          <p className="text-sm text-orbital-text-muted">Choose a new password.</p>
           <div>
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">New password</label>
+            <label className="text-xs font-semibold text-orbital-text-faint uppercase tracking-wider">New password</label>
             <input
               type="password"
               required
@@ -96,11 +96,11 @@ export default function ResetPasswordForm() {
               disabled={!ready}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+              className="mt-1 w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1 disabled:opacity-50"
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Confirm password</label>
+            <label className="text-xs font-semibold text-orbital-text-faint uppercase tracking-wider">Confirm password</label>
             <input
               type="password"
               required
@@ -108,7 +108,7 @@ export default function ResetPasswordForm() {
               disabled={!ready}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+              className="mt-1 w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1 disabled:opacity-50"
             />
           </div>
 
@@ -117,7 +117,7 @@ export default function ResetPasswordForm() {
           <button
             type="submit"
             disabled={!ready || submitting}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm rounded-lg py-2.5 transition-colors"
+            className="w-full bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg py-2.5 transition-colors"
           >
             {!ready ? 'Verifying link...' : submitting ? 'Updating...' : 'Update password'}
           </button>
