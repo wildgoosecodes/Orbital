@@ -74,4 +74,4 @@ export default defineConfig([
 
 ```
 
-<!-- verifying Vercel auto-deploy on push to main -->
+<!-- verified Vercel auto-deploy on push to main — Root Directory fixed to Orbital/ -->
