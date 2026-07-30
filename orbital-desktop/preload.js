@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('orbital', {
   sendChat: (messages) => ipcRenderer.invoke('chat:send', messages),
   showAndFocus: () => ipcRenderer.invoke('window:showAndFocus'),
   getWakewordModelDir: () => ipcRenderer.invoke('wakeword:getModelDir'),
+  getSnapshot: () => ipcRenderer.invoke('data:getSnapshot'),
   getStartupSetting: () => ipcRenderer.invoke('startup:get'),
   setStartupSetting: (openAtLogin) => ipcRenderer.invoke('startup:set', openAtLogin),
 });

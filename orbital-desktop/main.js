@@ -50,8 +50,8 @@ function createWindow() {
   });
 
   win = new BrowserWindow({
-    width: 480,
-    height: 640,
+    width: 760,
+    height: 820,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -143,6 +143,30 @@ ipcMain.handle('chat:send', async (_event, messages) => {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
     return { success: true, reply: data.reply };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('data:getSnapshot', async () => {
+  try {
+    const [tasksRes, habitsRes, habitLogsRes, goalsRes] = await Promise.all([
+      supabase.from('tasks').select('*').order('created_at', { ascending: false }),
+      supabase.from('habits').select('*').order('created_at', { ascending: false }),
+      supabase.from('habit_logs').select('habit_id, completed_on'),
+      supabase.from('goals').select('*').order('created_at', { ascending: false }),
+    ]);
+    if (tasksRes.error) throw tasksRes.error;
+    if (habitsRes.error) throw habitsRes.error;
+    if (habitLogsRes.error) throw habitLogsRes.error;
+    if (goalsRes.error) throw goalsRes.error;
+    return {
+      success: true,
+      tasks: tasksRes.data,
+      habits: habitsRes.data,
+      habitLogs: habitLogsRes.data,
+      goals: goalsRes.data,
+    };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
