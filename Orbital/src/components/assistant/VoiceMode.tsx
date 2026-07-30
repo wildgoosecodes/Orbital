@@ -42,17 +42,7 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-end p-4 flex-shrink-0">
-        <button
-          onClick={onClose}
-          aria-label="Close voice mode"
-          className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-900"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 space-y-3 max-w-md w-full mx-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 max-w-md w-full mx-auto">
         {messages.length === 0 && (
           <p className="text-center text-sm text-slate-500 mt-8">Tap the mic and say something.</p>
         )}
@@ -109,6 +99,15 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
         </button>
 
         <p className="text-sm font-medium text-slate-300">{STATUS_LABEL[status]}</p>
+
+        <button
+          onClick={onClose}
+          aria-label="Close voice mode"
+          className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-900"
+        >
+          <X size={16} />
+          Close
+        </button>
       </div>
     </div>
   );
