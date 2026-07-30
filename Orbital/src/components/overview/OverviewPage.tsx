@@ -20,7 +20,7 @@ import {
   bestCurrentStreak,
   bestEverStreak,
 } from '../../lib/overviewStats';
-import type { Tab } from '../layout/Sidebar';
+import type { Tab } from '../../lib/navTabs';
 import type { Profile } from '../../types/database';
 
 interface OverviewPageProps {

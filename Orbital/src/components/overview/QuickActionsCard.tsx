@@ -1,5 +1,5 @@
 import { BarChart3, CheckSquare, Map, Repeat2 } from 'lucide-react';
-import type { Tab } from '../layout/Sidebar';
+import type { Tab } from '../../lib/navTabs';
 
 interface QuickActionsCardProps {
   onNavigate: (tab: Tab) => void;

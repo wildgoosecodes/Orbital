@@ -2,6 +2,7 @@
 // disperse" animation. Positions are expressed in vmin so the whole
 // scene scales cleanly on both phone and desktop viewports without a
 // resize listener.
+import type { Easing } from 'framer-motion';
 
 export type ParticleRole = 'core' | 'orbiter';
 
@@ -51,7 +52,7 @@ interface Keyframes {
   opacity: number[];
   scale: number[];
   times: number[];
-  ease: string[];
+  ease: Easing[];
 }
 
 function vmin(n: number): string {
@@ -72,7 +73,7 @@ export function buildKeyframes(p: Particle): Keyframes {
       scale: [1, 0.2, 0.2, 1, 1],
       opacity: [1, 0, 0, 1, 1],
       times: [0, T_CONVERGE_END, T_HOLD_END, T_DISPERSE_END, 1],
-      ease: ['easeIn', 'linear', 'easeOut', 'linear'],
+      ease: ['easeIn', 'linear', 'easeOut', 'linear'] as Easing[],
     };
   }
 
@@ -93,7 +94,8 @@ export function buildKeyframes(p: Particle): Keyframes {
   x.push(vmin(scatter.x), vmin(scatter.x));
   y.push(vmin(scatter.y), vmin(scatter.y));
 
-  const ease = ['easeInOut', ...Array(ORBIT_SAMPLES).fill('linear'), 'easeInOut', 'linear'];
+  const linearSteps: Easing[] = Array(ORBIT_SAMPLES).fill('linear');
+  const ease: Easing[] = ['easeInOut', ...linearSteps, 'easeInOut', 'linear'];
 
   return {
     x,
@@ -108,4 +110,4 @@ export function buildKeyframes(p: Particle): Keyframes {
 export const PLANET_TIMES = [0, T_CONVERGE_END, T_HOLD_END, T_DISPERSE_END, 1];
 export const PLANET_SCALE = [0, 1, 1, 0, 0];
 export const PLANET_OPACITY = [0, 1, 1, 0, 0];
-export const PLANET_EASE = ['easeOut', 'linear', 'easeIn', 'linear'];
+export const PLANET_EASE: Easing[] = ['easeOut', 'linear', 'easeIn', 'linear'];

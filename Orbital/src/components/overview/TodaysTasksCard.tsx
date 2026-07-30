@@ -1,6 +1,6 @@
 import { Calendar, Milestone, Plus } from 'lucide-react';
 import type { Task, TaskStatus } from '../../types/database';
-import type { Tab } from '../layout/Sidebar';
+import type { Tab } from '../../lib/navTabs';
 import { sortForOverview } from '../../lib/overviewStats';
 
 interface TodaysTasksCardProps {

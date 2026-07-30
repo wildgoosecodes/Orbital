@@ -25,8 +25,8 @@ function speak(text: string, onDone: () => void) {
     onDone();
   };
   utterance.onerror = (event) => {
+    console.error('speechSynthesis error:', event.error, 'for utterance:', activeUtterance?.text);
     activeUtterance = null;
-    console.error('speechSynthesis error:', event.error);
     onDone();
   };
   activeUtterance = utterance;

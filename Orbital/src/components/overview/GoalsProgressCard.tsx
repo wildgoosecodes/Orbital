@@ -1,6 +1,6 @@
 import { Rocket, Target, Trophy } from 'lucide-react';
 import type { Goal } from '../../types/database';
-import type { Tab } from '../layout/Sidebar';
+import type { Tab } from '../../lib/navTabs';
 import GoalProgressCard from '../cards/GoalProgressCard';
 
 interface GoalsProgressCardProps {
