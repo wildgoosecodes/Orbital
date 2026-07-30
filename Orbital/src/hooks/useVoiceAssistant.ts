@@ -7,6 +7,12 @@ const SILENCE_DURATION_MS = 1200; // how long silence must persist to auto-stop
 
 export type VoiceStatus = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking' | 'error';
 
+// Safari/WebKit doesn't keep an internal strong reference to a speaking
+// utterance the way Chrome does — if nothing else references it, it can be
+// garbage-collected mid-speech, which silently cuts off audio with no error.
+// Holding it here for the duration of playback works around that.
+let activeUtterance: SpeechSynthesisUtterance | null = null;
+
 function speak(text: string, onDone: () => void) {
   if (!text || !window.speechSynthesis) {
     onDone();
@@ -14,8 +20,16 @@ function speak(text: string, onDone: () => void) {
   }
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.onend = onDone;
-  utterance.onerror = onDone;
+  utterance.onend = () => {
+    activeUtterance = null;
+    onDone();
+  };
+  utterance.onerror = (event) => {
+    activeUtterance = null;
+    console.error('speechSynthesis error:', event.error);
+    onDone();
+  };
+  activeUtterance = utterance;
   window.speechSynthesis.speak(utterance);
 }
 
