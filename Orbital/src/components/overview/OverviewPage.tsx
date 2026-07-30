@@ -119,6 +119,10 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         />
       </motion.div>
 
+      <motion.div initial="hidden" animate="visible" variants={fadeInUp} transition={fadeInUpTransition}>
+        <ConsistencyHeatmap habits={habits} loading={habitsLoading} />
+      </motion.div>
+
       <motion.div
         initial="hidden"
         animate="visible"
@@ -148,12 +152,8 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         viewport={{ once: true, margin: '-80px' }}
         variants={fadeInUp}
         transition={fadeInUpTransition}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
       >
-        <div className="lg:col-span-2">
-          <WeeklyProgressChart data={last7Days} />
-        </div>
-        <ConsistencyHeatmap habits={habits} loading={habitsLoading} />
+        <WeeklyProgressChart data={last7Days} />
       </motion.div>
     </div>
   );

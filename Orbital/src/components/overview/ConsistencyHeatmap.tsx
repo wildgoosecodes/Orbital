@@ -69,27 +69,29 @@ export default function ConsistencyHeatmap({ habits, loading }: ConsistencyHeatm
 
   return (
     <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
-      <h3 className="text-sm font-semibold text-orbital-text">Consistency by day</h3>
+      <div className="max-w-xl mx-auto">
+        <h3 className="text-sm font-semibold text-orbital-text">Consistency by day</h3>
 
-      <div className="mt-4 grid grid-cols-7 gap-1.5">
-        {dayCounts.map((count, i) => (
-          <div
-            key={i}
-            title={`${count} habit${count === 1 ? '' : 's'} logged`}
-            className={`aspect-square rounded-md ${STEP_CLASS[intensityStep(count, habits.length)]}`}
-          />
-        ))}
-      </div>
-
-      <div className="mt-3.5 flex items-center justify-between text-xs text-orbital-text-faint">
-        <span>{WEEKS} weeks</span>
-        <span className="flex items-center gap-1">
-          Less
-          {STEP_CLASS.map((cls, i) => (
-            <i key={i} className={`w-2.5 h-2.5 rounded-sm inline-block ${cls}`} />
+        <div className="mt-4 grid grid-cols-7 gap-2">
+          {dayCounts.map((count, i) => (
+            <div
+              key={i}
+              title={`${count} habit${count === 1 ? '' : 's'} logged`}
+              className={`aspect-square rounded-md ${STEP_CLASS[intensityStep(count, habits.length)]}`}
+            />
           ))}
-          More
-        </span>
+        </div>
+
+        <div className="mt-3.5 flex items-center justify-between text-xs text-orbital-text-faint">
+          <span>{WEEKS} weeks</span>
+          <span className="flex items-center gap-1">
+            Less
+            {STEP_CLASS.map((cls, i) => (
+              <i key={i} className={`w-2.5 h-2.5 rounded-sm inline-block ${cls}`} />
+            ))}
+            More
+          </span>
+        </div>
       </div>
     </div>
   );
