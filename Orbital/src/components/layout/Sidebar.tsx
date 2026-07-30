@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom';
 import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
@@ -6,8 +7,6 @@ import NotificationToggle from '../notifications/NotificationToggle';
 export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
 interface SidebarProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
   open: boolean;
   onClose: () => void;
   userId: string;
@@ -26,7 +25,17 @@ export const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHi
   { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, open, onClose, userId, userEmail, onSignOut }: SidebarProps) {
+export const TAB_PATHS: Record<Tab, string> = {
+  overview: '/app',
+  tasks: '/app/tasks',
+  calendar: '/app/calendar',
+  habits: '/app/habits',
+  roadmap: '/app/roadmap',
+  analytics: '/app/analytics',
+  assistant: '/app/assistant',
+};
+
+export default function Sidebar({ open, onClose, userId, userEmail, onSignOut }: SidebarProps) {
   const nav = (
     <>
       <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
@@ -36,23 +45,24 @@ export default function Sidebar({ activeTab, onTabChange, open, onClose, userId,
 
       <nav className="p-4 space-y-1">
         {TABS.map(({ tab, label, icon: Icon, xlHidden }) => (
-          <button
+          <NavLink
             key={tab}
-            onClick={() => {
-              onTabChange(tab);
-              onClose();
-            }}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
-              xlHidden ? 'xl:hidden' : ''
-            } ${
-              activeTab === tab
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-            }`}
+            to={TAB_PATHS[tab]}
+            end={tab === 'overview'}
+            onClick={onClose}
+            className={({ isActive }) =>
+              `w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                xlHidden ? 'xl:hidden' : ''
+              } ${
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                  : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+              }`
+            }
           >
             <Icon size={18} strokeWidth={2} />
             {label}
-          </button>
+          </NavLink>
         ))}
         <WhatsNewModal onOpen={onClose} />
       </nav>
