@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import Header from '../components/layout/Header';
-import Sidebar, { TABS, type Tab, TAB_PATHS } from '../components/layout/Sidebar';
+import TopNav from '../components/layout/TopNav';
 import AIAssistantPanel from '../components/assistant/AIAssistantPanel';
 import VoiceMode from '../components/assistant/VoiceMode';
 import TaskList from '../components/tasks/TaskList';
@@ -16,9 +15,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { useAssistantChat } from '../hooks/useAssistantChat';
 import { supabase } from '../lib/supabaseClient';
+import { TABS, type Tab, TAB_PATHS } from '../lib/navTabs';
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [voiceModeOpen, setVoiceModeOpen] = useState(false);
   const { session } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useProfile(session?.user.id ?? '');
@@ -47,10 +46,8 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout
-      sidebar={
-        <Sidebar
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+      topnav={
+        <TopNav
           userId={userId}
           userEmail={userEmail}
           profile={profile}
@@ -58,7 +55,6 @@ export default function Dashboard() {
           onSignOut={() => supabase.auth.signOut()}
         />
       }
-      header={<Header onMenuClick={() => setSidebarOpen(true)} />}
       assistant={<AIAssistantPanel {...assistantChat} onOpenVoiceMode={() => setVoiceModeOpen(true)} />}
     >
       <VoiceMode
@@ -78,8 +74,8 @@ export default function Dashboard() {
           {showTabHeader ? (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-white">{currentTabLabel}</h2>
-                <p className="text-sm text-slate-400">Your personal dashboard.</p>
+                <h2 className="text-2xl font-bold text-orbital-text">{currentTabLabel}</h2>
+                <p className="text-sm text-orbital-text-muted">Your personal dashboard.</p>
               </div>
 
               <Routes>
@@ -99,7 +95,7 @@ export default function Dashboard() {
               <Route
                 path="assistant"
                 element={
-                  <div className="h-[calc(100dvh-8rem)] xl:hidden bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                  <div className="h-[calc(100dvh-8rem)] xl:hidden bg-cosmic-surface border border-cosmic-border rounded-xl overflow-hidden">
                     <AIAssistantPanel {...assistantChat} onOpenVoiceMode={() => setVoiceModeOpen(true)} />
                   </div>
                 }

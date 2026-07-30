@@ -1,24 +1,20 @@
 import type { ReactNode } from 'react';
 
 interface DashboardLayoutProps {
-  sidebar: ReactNode;
-  header: ReactNode;
+  topnav: ReactNode;
   assistant?: ReactNode;
   children: ReactNode;
 }
 
-export default function DashboardLayout({ sidebar, header, assistant, children }: DashboardLayoutProps) {
+export default function DashboardLayout({ topnav, assistant, children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-[100dvh] bg-slate-900 text-slate-100 font-sans antialiased overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      {sidebar}
+    <div className="flex flex-col h-[100dvh] bg-cosmic-bg text-orbital-text font-sans antialiased overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+      {topnav}
 
-      <main className="flex-1 flex flex-col overflow-y-auto bg-slate-900">
-        {header}
-        <div className="flex flex-1">
-          <div className="p-4 md:p-8 flex-1 min-w-0">{children}</div>
-          {assistant && <div className="hidden xl:flex xl:w-80 border-l border-slate-800">{assistant}</div>}
-        </div>
-      </main>
+      <div className="flex flex-1 min-h-0">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 min-w-0">{children}</main>
+        {assistant && <div className="hidden xl:flex xl:w-80 border-l border-cosmic-border">{assistant}</div>}
+      </div>
     </div>
   );
 }
