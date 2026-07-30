@@ -1,19 +1,14 @@
 import type { Goal, Task } from '../types/database';
 import type { HabitWithLogs } from '../hooks/useHabits';
 
-const EXPECTED_DAYS_PER_WEEK: Record<HabitWithLogs['frequency'], number> = {
-  daily: 7,
-  weekly: 1,
-};
-
-/** % of the trailing 7 days completed, relative to how often the habit is expected to happen. */
+/** % of the trailing 7 days completed, relative to how many days/week the habit is actually scheduled for. */
 export function habitConsistency(habit: HabitWithLogs): number {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 6);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
   const recentCount = habit.completedDates.filter((d) => d >= cutoffStr).length;
-  const expected = EXPECTED_DAYS_PER_WEEK[habit.frequency];
+  const expected = Math.max(1, habit.days_of_week.length);
   return Math.min(100, Math.round((recentCount / expected) * 100));
 }
 

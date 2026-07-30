@@ -3,7 +3,7 @@ import { CheckSquare, Flame, ListTodo, TrendingUp } from 'lucide-react';
 import StatCard from '../cards/StatCard';
 import CircularProgress from '../charts/CircularProgress';
 import WeeklyProgressChart from '../charts/WeeklyProgressChart';
-import TodaysTasksCard from './TodaysTasksCard';
+import TodaysAgendaCard from './TodaysAgendaCard';
 import GoalsProgressCard from './GoalsProgressCard';
 import QuickActionsCard from './QuickActionsCard';
 import WeatherCard from './WeatherCard';
@@ -42,7 +42,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
   const name =
     profile?.display_name && profile.display_name !== userEmail ? profile.display_name : displayNameFromEmail(userEmail);
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
-  const { habits, loading: habitsLoading } = useHabits(userId);
+  const { habits, loading: habitsLoading, toggleToday } = useHabits(userId);
   const { goals, loading: goalsLoading } = useGoals(userId);
   const { events, loading: eventsLoading } = useEvents(userId);
   const { last7Days, loading: analyticsLoading } = useAnalytics(userId);
@@ -132,14 +132,18 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         className="grid grid-cols-1 lg:grid-cols-3 gap-4"
       >
         <div className="lg:col-span-2 space-y-4">
-          <TodaysTasksCard
+          <TodaysAgendaCard
+            userId={userId}
             tasks={tasks}
-            loading={tasksLoading}
-            onToggleDone={(id, status) => setStatus(id, status)}
+            habits={habits}
+            tasksLoading={tasksLoading}
+            habitsLoading={habitsLoading}
+            onToggleTask={(id, status) => setStatus(id, status)}
+            onToggleHabit={toggleToday}
             onNavigate={onNavigate}
             goalTitleById={goalTitleById}
           />
-          <MiniCalendarCard tasks={tasks} events={events} onNavigate={onNavigate} />
+          <MiniCalendarCard tasks={tasks} events={events} habits={habits} onNavigate={onNavigate} />
         </div>
         <div className="space-y-4">
           <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />

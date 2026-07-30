@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarPlus } from 'lucide-react';
+import { CalendarDays, Milestone } from 'lucide-react';
 import type { NewTaskInput } from '../../hooks/useTasks';
-import type { Task, TaskPriority } from '../../types/database';
-import { googleCalendarUrl } from '../../lib/googleCalendar';
+import type { Goal, Task, TaskPriority } from '../../types/database';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
 
 interface TaskItemProps {
@@ -12,6 +12,8 @@ interface TaskItemProps {
   onToggleDone: (task: Task) => void;
   onUpdate: (id: string, input: NewTaskInput) => Promise<void>;
   onDelete: (id: string) => void;
+  goals: Goal[];
+  categories: string[];
 }
 
 const PRIORITY_STYLES: Record<Task['priority'], string> = {
@@ -20,7 +22,7 @@ const PRIORITY_STYLES: Record<Task['priority'], string> = {
   high: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
 };
 
-export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: TaskItemProps) {
+export default function TaskItem({ task, onToggleDone, onUpdate, onDelete, goals, categories }: TaskItemProps) {
   const done = task.status === 'done';
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -28,7 +30,10 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
   const [priority, setPriority] = useState<TaskPriority>(task.priority);
   const [dueDate, setDueDate] = useState(task.due_date ?? '');
   const [category, setCategory] = useState(task.category ?? '');
+  const [goalId, setGoalId] = useState(task.goal_id ?? '');
   const [saving, setSaving] = useState(false);
+
+  const goalTitle = task.goal_id ? goals.find((g) => g.id === task.goal_id)?.title : undefined;
 
   function startEditing() {
     setTitle(task.title);
@@ -36,6 +41,7 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
     setPriority(task.priority);
     setDueDate(task.due_date ?? '');
     setCategory(task.category ?? '');
+    setGoalId(task.goal_id ?? '');
     setEditing(true);
   }
 
@@ -50,6 +56,7 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
         priority,
         due_date: dueDate || undefined,
         category: category.trim() || undefined,
+        goal_id: goalId || null,
       });
       setEditing(false);
     } finally {
@@ -102,12 +109,30 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
           />
           <input
             type="text"
+            list="task-category-options"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Category"
             className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
           />
+          <datalist id="task-category-options">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </div>
+        <select
+          value={goalId}
+          onChange={(e) => setGoalId(e.target.value)}
+          className="w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+        >
+          <option value="">No goal</option>
+          {goals.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.title}
+            </option>
+          ))}
+        </select>
         <div className="flex items-center gap-2 justify-end">
           <motion.button
             whileTap={tapScale}
@@ -170,7 +195,18 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
 
       <button onClick={startEditing} className="flex-1 min-w-0 text-left">
         <p className={`text-sm font-medium ${done ? 'text-orbital-text-faint line-through' : 'text-orbital-text'}`}>{task.title}</p>
-        {task.due_date && <p className="text-xs text-orbital-text-faint mt-0.5">Due {task.due_date}</p>}
+        <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+          {task.due_date && <span className="text-xs text-orbital-text-faint">Due {task.due_date}</span>}
+          {task.category && (
+            <span className="text-[11px] text-orbital-text-muted bg-cosmic-surface-3 px-1.5 py-0.5 rounded">{task.category}</span>
+          )}
+          {goalTitle && (
+            <span className="flex items-center gap-1 text-[11px] text-orbital-accent-2/80 truncate">
+              <Milestone size={11} className="flex-shrink-0" />
+              {goalTitle}
+            </span>
+          )}
+        </div>
       </button>
 
       <span className={`text-xs font-semibold px-2 py-1 rounded uppercase tracking-wide ${PRIORITY_STYLES[task.priority]}`}>
@@ -178,15 +214,13 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete }: Tas
       </span>
 
       {task.due_date && (
-        <a
-          href={googleCalendarUrl(task)}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Add to Google Calendar"
+        <Link
+          to={`/app/calendar?date=${task.due_date}`}
+          aria-label="View on calendar"
           className="text-orbital-text-faint hover:text-sky-400 p-1"
         >
-          <CalendarPlus size={16} strokeWidth={1.5} />
-        </a>
+          <CalendarDays size={16} strokeWidth={1.5} />
+        </Link>
       )}
 
       <motion.button

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Task, TaskStatus } from '../types/database';
+import type { Task } from '../types/database';
 import { fetchTasks, tasksQueryKey } from './useTasks';
 
 export interface DayCompletion {
@@ -7,18 +7,6 @@ export interface DayCompletion {
   label: string;
   completed: number;
 }
-
-export interface StatusCount {
-  status: TaskStatus;
-  label: string;
-  count: number;
-}
-
-const STATUS_ORDER: { status: TaskStatus; label: string }[] = [
-  { status: 'todo', label: 'Todo' },
-  { status: 'in_progress', label: 'In Progress' },
-  { status: 'done', label: 'Done' },
-];
 
 function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -46,14 +34,6 @@ function buildLast7Days(tasks: Task[]): DayCompletion[] {
   return days;
 }
 
-function buildStatusBreakdown(tasks: Task[]): StatusCount[] {
-  const counts = new Map<TaskStatus, number>();
-  for (const task of tasks) {
-    counts.set(task.status, (counts.get(task.status) || 0) + 1);
-  }
-  return STATUS_ORDER.map(({ status, label }) => ({ status, label, count: counts.get(status) || 0 }));
-}
-
 /** Reads the same shared `tasks` query useTasks() uses — no fetch of its own. */
 export function useAnalytics(userId: string) {
   const { data: tasks = [], isLoading: loading, error } = useQuery({
@@ -64,7 +44,6 @@ export function useAnalytics(userId: string) {
 
   return {
     last7Days: buildLast7Days(tasks),
-    statusBreakdown: buildStatusBreakdown(tasks),
     loading,
     error: error ? (error as Error).message : null,
   };

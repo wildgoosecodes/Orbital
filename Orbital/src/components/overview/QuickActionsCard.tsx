@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BarChart3, CheckSquare, Map, Repeat2 } from 'lucide-react';
+import { CalendarDays, CheckSquare, Map, Repeat2 } from 'lucide-react';
 import type { Tab } from '../../lib/navTabs';
 import { cardHover, tapScale } from '../../lib/motion';
 
@@ -11,7 +11,7 @@ const ACTIONS: { label: string; tab: Tab; icon: typeof CheckSquare; color: strin
   { label: 'Add New Task', tab: 'tasks', icon: CheckSquare, color: '#6366f1' },
   { label: 'Log a Habit', tab: 'habits', icon: Repeat2, color: '#10b981' },
   { label: 'View Roadmap', tab: 'roadmap', icon: Map, color: '#f59e0b' },
-  { label: 'View Analytics', tab: 'analytics', icon: BarChart3, color: '#3987e5' },
+  { label: 'View Calendar', tab: 'calendar', icon: CalendarDays, color: '#3987e5' },
 ];
 
 export default function QuickActionsCard({ onNavigate }: QuickActionsCardProps) {

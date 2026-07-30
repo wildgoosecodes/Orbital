@@ -285,7 +285,7 @@ function GoalRow({
                 <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
                   <span className="w-2.5 h-2.5 rounded-full bg-orbital-accent-1/20 border border-orbital-accent-1/50 flex-shrink-0" />
                   <span className="truncate text-orbital-text-muted">{habit.name}</span>
-                  <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates)}d streak</span>
+                  <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates, habit.days_of_week)}d streak</span>
                 </div>
               ))}
             </div>

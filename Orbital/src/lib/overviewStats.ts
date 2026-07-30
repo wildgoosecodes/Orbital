@@ -41,12 +41,12 @@ export function weeklyProductivityScore(last7Days: DayCompletion[], openCount: n
 
 export function bestCurrentStreak(habits: HabitWithLogs[]): number {
   if (habits.length === 0) return 0;
-  return Math.max(...habits.map((h) => calculateStreak(h.completedDates)));
+  return Math.max(...habits.map((h) => calculateStreak(h.completedDates, h.days_of_week)));
 }
 
 export function bestEverStreak(habits: HabitWithLogs[]): number {
   if (habits.length === 0) return 0;
-  return Math.max(...habits.map((h) => longestStreak(h.completedDates)));
+  return Math.max(...habits.map((h) => longestStreak(h.completedDates, h.days_of_week)));
 }
 
 /** Open tasks first (soonest due first), then done tasks — for the compact Overview list. */

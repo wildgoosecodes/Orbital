@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
-import type { Habit, HabitFrequency } from '../types/database';
+import type { Habit } from '../types/database';
 import { todayStr } from '../lib/habitStreak';
 
 export interface HabitWithLogs extends Habit {
@@ -10,7 +10,8 @@ export interface HabitWithLogs extends Habit {
 
 export interface NewHabitInput {
   name: string;
-  frequency: HabitFrequency;
+  /** Weekdays this habit runs — 0 = Sunday ... 6 = Saturday. */
+  days_of_week: number[];
   goal_id?: string | null;
 }
 
@@ -62,8 +63,11 @@ export function useHabits(userId: string) {
       const { error } = await supabase.from('habits').insert({
         user_id: userId,
         name: input.name,
-        frequency: input.frequency,
+        // frequency is superseded by days_of_week — kept only to satisfy the
+        // still-existing NOT NULL column, not read anywhere anymore.
+        frequency: 'daily',
         target_per_period: 1,
+        days_of_week: input.days_of_week,
         goal_id: input.goal_id ?? null,
       });
       if (error) throw error;

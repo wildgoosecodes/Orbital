@@ -1,6 +1,6 @@
-import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, Map, Repeat2, Sparkles } from 'lucide-react';
+import { CalendarDays, CheckSquare, LayoutDashboard, Map, Repeat2, Sparkles } from 'lucide-react';
 
-export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
+export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'assistant';
 
 export const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
   { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -8,7 +8,6 @@ export const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHi
   { tab: 'calendar', label: 'Calendar', icon: CalendarDays },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },
   { tab: 'roadmap', label: 'Yearly Goal Tree', icon: Map },
-  { tab: 'analytics', label: 'Analytics', icon: BarChart3 },
   // The assistant already lives in the persistent side panel on xl+ screens.
   { tab: 'assistant', label: 'Assistant', icon: Sparkles, xlHidden: true },
 ];
@@ -19,6 +18,5 @@ export const TAB_PATHS: Record<Tab, string> = {
   calendar: '/app/calendar',
   habits: '/app/habits',
   roadmap: '/app/roadmap',
-  analytics: '/app/analytics',
   assistant: '/app/assistant',
 };

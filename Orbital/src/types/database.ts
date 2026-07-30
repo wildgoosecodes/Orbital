@@ -32,6 +32,8 @@ export interface Habit {
   name: string;
   frequency: HabitFrequency;
   target_per_period: number;
+  /** Weekdays this habit is scheduled for — 0 = Sunday ... 6 = Saturday, matching Date.getDay(). */
+  days_of_week: number[];
   created_at: string;
 }
 

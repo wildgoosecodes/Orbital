@@ -3,19 +3,21 @@ import { motion } from 'framer-motion';
 import { CalendarDays } from 'lucide-react';
 import type { Event, Task } from '../../types/database';
 import type { Tab } from '../../lib/navTabs';
+import type { HabitWithLogs } from '../../hooks/useHabits';
 import { buildMonthGrid, dateKey } from '../../lib/calendarGrid';
 import { cardHover, hoverScale, tapScale } from '../../lib/motion';
 
 interface MiniCalendarCardProps {
   tasks: Task[];
   events: Event[];
+  habits: HabitWithLogs[];
   onNavigate: (tab: Tab) => void;
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
 
-export default function MiniCalendarCard({ tasks, events, onNavigate }: MiniCalendarCardProps) {
+export default function MiniCalendarCard({ tasks, events, habits, onNavigate }: MiniCalendarCardProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = dateKey(today);
   const gridDays = useMemo(() => buildMonthGrid(today), [today]);
@@ -35,6 +37,14 @@ export default function MiniCalendarCard({ tasks, events, onNavigate }: MiniCale
     }
     return set;
   }, [events]);
+
+  const hasHabitByWeekday = useMemo(() => {
+    const set = new Set<number>();
+    for (const habit of habits) {
+      for (const day of habit.days_of_week) set.add(day);
+    }
+    return set;
+  }, [habits]);
 
   return (
     <motion.div whileHover={cardHover} className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
@@ -64,6 +74,7 @@ export default function MiniCalendarCard({ tasks, events, onNavigate }: MiniCale
           const isToday = key === todayKey;
           const hasTask = hasTaskByDate.has(key);
           const hasEvent = hasEventByDate.has(key);
+          const hasHabit = hasHabitByWeekday.has(day.getDay());
 
           return (
             <button
@@ -78,10 +89,13 @@ export default function MiniCalendarCard({ tasks, events, onNavigate }: MiniCale
               }`}
             >
               {day.getDate()}
-              {(hasTask || hasEvent) && (
-                <span
-                  className={`w-1 h-1 rounded-full ${isToday ? 'bg-cosmic-bg' : hasEvent ? 'bg-sky-400' : 'bg-orbital-accent-2'}`}
-                />
+              {(hasTask || hasEvent || hasHabit) && (
+                <span className="flex items-center gap-0.5">
+                  {(hasTask || hasEvent) && (
+                    <span className={`w-1 h-1 rounded-full ${isToday ? 'bg-cosmic-bg' : hasEvent ? 'bg-sky-400' : 'bg-orbital-accent-2'}`} />
+                  )}
+                  {hasHabit && <span className={`w-1 h-1 rounded-full ${isToday ? 'bg-cosmic-bg' : 'bg-emerald-400'}`} />}
+                </span>
               )}
             </button>
           );

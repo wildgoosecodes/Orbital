@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, CalendarPlus, Clock, Download, Plus, Pencil, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Clock, Download, Plus, Pencil, Repeat2, Trash2 } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { useEvents } from '../../hooks/useEvents';
+import { useHabits } from '../../hooks/useHabits';
 import { useGoogleCalendarImport } from '../../hooks/useGoogleCalendarImport';
-import { googleCalendarUrl, googleCalendarUrlForEvent } from '../../lib/googleCalendar';
 import { buildMonthGrid, dateKey } from '../../lib/calendarGrid';
 import EventForm from './EventForm';
 import type { Task, Event } from '../../types/database';
@@ -27,13 +28,23 @@ const PRIORITY_BADGE: Record<Task['priority'], string> = {
   high: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
 };
 
+function parseInitialDate(dateParam: string | null): Date {
+  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+    const d = new Date(`${dateParam}T00:00:00`);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+
 export default function CalendarView({ userId }: CalendarViewProps) {
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
   const { events, loading: eventsLoading, addEvent, updateEvent, removeEvent } = useEvents(userId);
+  const { habits, loading: habitsLoading } = useHabits(userId);
   const googleImport = useGoogleCalendarImport(userId);
+  const [searchParams] = useSearchParams();
   const today = useMemo(() => new Date(), []);
-  const [viewDate, setViewDate] = useState(() => new Date());
-  const [selectedKey, setSelectedKey] = useState(() => dateKey(new Date()));
+  const [viewDate, setViewDate] = useState(() => parseInitialDate(searchParams.get('date')));
+  const [selectedKey, setSelectedKey] = useState(() => dateKey(parseInitialDate(searchParams.get('date'))));
   const [addingEvent, setAddingEvent] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
@@ -69,6 +80,10 @@ export default function CalendarView({ userId }: CalendarViewProps) {
     return map;
   }, [events]);
 
+  function habitsForWeekday(weekday: number) {
+    return habits.filter((h) => h.days_of_week.includes(weekday));
+  }
+
   function goToMonth(delta: number) {
     setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   }
@@ -86,7 +101,9 @@ export default function CalendarView({ userId }: CalendarViewProps) {
 
   const selectedTasks = tasksByDate.get(selectedKey) ?? [];
   const selectedEvents = eventsByDate.get(selectedKey) ?? [];
-  const hasAnyItems = selectedTasks.length > 0 || selectedEvents.length > 0;
+  const selectedDate = useMemo(() => new Date(`${selectedKey}T00:00:00`), [selectedKey]);
+  const selectedHabits = useMemo(() => habitsForWeekday(selectedDate.getDay()), [habits, selectedDate]);
+  const hasAnyItems = selectedTasks.length > 0 || selectedEvents.length > 0 || selectedHabits.length > 0;
 
   return (
     <div className="space-y-4">
@@ -146,6 +163,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
             const inMonth = day.getMonth() === viewDate.getMonth();
             const dayTasks = tasksByDate.get(key) ?? [];
             const dayEvents = eventsByDate.get(key) ?? [];
+            const dayHabits = habitsForWeekday(day.getDay());
             const isToday = key === todayKey;
             const isSelected = key === selectedKey;
 
@@ -172,6 +190,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   ))}
                   {dayTasks.length > 3 && <span className="text-[9px] text-orbital-text-faint">+{dayTasks.length - 3}</span>}
                   {dayEvents.length > 0 && <Clock size={9} className="text-sky-400" strokeWidth={2} />}
+                  {dayHabits.length > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
                 </div>
               </button>
             );
@@ -182,7 +201,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
       <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-orbital-text">
-            {new Date(`${selectedKey}T00:00:00`).toLocaleDateString(undefined, {
+            {selectedDate.toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
               day: 'numeric',
@@ -209,8 +228,8 @@ export default function CalendarView({ userId }: CalendarViewProps) {
           />
         )}
 
-        {loading && <p className="text-sm text-orbital-text-faint">Loading...</p>}
-        {!loading && !hasAnyItems && !addingEvent && (
+        {(loading || habitsLoading) && <p className="text-sm text-orbital-text-faint">Loading...</p>}
+        {!loading && !habitsLoading && !hasAnyItems && !addingEvent && (
           <p className="text-sm text-orbital-text-faint">Nothing scheduled this day.</p>
         )}
 
@@ -240,16 +259,6 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                 <span className={`text-xs font-semibold px-2 py-1 rounded uppercase tracking-wide ${PRIORITY_BADGE[task.priority]}`}>
                   {task.priority}
                 </span>
-
-                <a
-                  href={googleCalendarUrl(task)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Add to Google Calendar"
-                  className="text-orbital-text-faint hover:text-sky-400 p-1"
-                >
-                  <CalendarPlus size={16} strokeWidth={1.5} />
-                </a>
               </div>
             );
           })}
@@ -279,16 +288,6 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   </p>
                 </div>
 
-                <a
-                  href={googleCalendarUrlForEvent(event)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Add to Google Calendar"
-                  className="text-orbital-text-faint hover:text-sky-400 p-1"
-                >
-                  <CalendarPlus size={16} strokeWidth={1.5} />
-                </a>
-
                 <button
                   onClick={() => setEditingEventId(event.id)}
                   aria-label="Edit event"
@@ -309,6 +308,30 @@ export default function CalendarView({ userId }: CalendarViewProps) {
               </div>
             ),
           )}
+
+          {selectedHabits.map((habit) => {
+            const doneThatDay = habit.completedDates.includes(selectedKey);
+            return (
+              <div key={habit.id} className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg">
+                <span
+                  className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
+                    doneThatDay ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
+                  }`}
+                >
+                  {doneThatDay && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </span>
+                <Repeat2 size={14} className="text-orbital-accent-2 flex-shrink-0" strokeWidth={2} />
+                <p className={`flex-1 min-w-0 text-sm font-medium truncate ${doneThatDay ? 'text-orbital-text-faint' : 'text-orbital-text'}`}>
+                  {habit.name}
+                </p>
+                <span className="text-[11px] text-orbital-text-faint">Habit</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

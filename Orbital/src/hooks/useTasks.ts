@@ -8,6 +8,7 @@ export interface NewTaskInput {
   priority?: TaskPriority;
   due_date?: string;
   category?: string;
+  goal_id?: string | null;
 }
 
 export async function fetchTasks(): Promise<Task[]> {
@@ -39,6 +40,7 @@ export function useTasks(userId: string) {
         priority: input.priority || 'medium',
         due_date: input.due_date || null,
         category: input.category || null,
+        goal_id: input.goal_id || null,
       });
       if (error) throw error;
     },
@@ -77,6 +79,7 @@ export function useTasks(userId: string) {
           priority: updates.priority || 'medium',
           due_date: updates.due_date || null,
           category: updates.category || null,
+          goal_id: updates.goal_id || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);

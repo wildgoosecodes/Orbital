@@ -1,8 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Milestone } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
-import { calculateStreak, todayStr } from '../../lib/habitStreak';
+import { calculateStreak, formatSchedule, todayStr } from '../../lib/habitStreak';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
+
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 interface HabitItemProps {
   habit: HabitWithLogs;
@@ -13,7 +15,7 @@ interface HabitItemProps {
 
 export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }: HabitItemProps) {
   const doneToday = habit.completedDates.includes(todayStr());
-  const streak = calculateStreak(habit.completedDates);
+  const streak = calculateStreak(habit.completedDates, habit.days_of_week);
 
   return (
     <motion.div
@@ -55,7 +57,21 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-orbital-text">{habit.name}</p>
-        <p className="text-xs text-orbital-text-faint mt-0.5 capitalize">{habit.frequency}</p>
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-xs text-orbital-text-faint">{formatSchedule(habit.days_of_week)}</span>
+          <span className="flex items-center gap-0.5">
+            {DAY_LABELS.map((label, i) => (
+              <span
+                key={i}
+                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold ${
+                  habit.days_of_week.includes(i) ? 'bg-orbital-accent-1/25 text-orbital-accent-2' : 'text-orbital-text-faint/40'
+                }`}
+              >
+                {label}
+              </span>
+            ))}
+          </span>
+        </div>
         {goalTitle && (
           <p className="mt-1 flex items-center gap-1 text-[11px] text-orbital-accent-2/80 truncate">
             <Milestone size={11} className="flex-shrink-0" />

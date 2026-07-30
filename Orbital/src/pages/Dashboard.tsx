@@ -9,7 +9,6 @@ import TaskList from '../components/tasks/TaskList';
 import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
 import RoadmapView from '../components/roadmap/RoadmapView';
-import AnalyticsPanel from '../components/analytics/AnalyticsPanel';
 import OverviewPage from '../components/overview/OverviewPage';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
@@ -84,7 +83,6 @@ export default function Dashboard() {
                 <Route path="calendar" element={<CalendarView userId={userId} />} />
                 <Route path="habits" element={<HabitList userId={userId} />} />
                 <Route path="roadmap" element={<RoadmapView userId={userId} />} />
-                <Route path="analytics" element={<AnalyticsPanel userId={userId} />} />
               </Routes>
             </div>
           ) : (
