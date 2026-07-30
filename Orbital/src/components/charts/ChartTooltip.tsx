@@ -5,9 +5,9 @@ export default function ChartTooltip({ active, payload, label }: TooltipContentP
   const point = payload[0];
 
   return (
-    <div className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 shadow-lg">
-      <p className="text-xs text-slate-400">{label}</p>
-      <p className="text-sm font-semibold text-white">{point.value}</p>
+    <div className="bg-cosmic-surface-2 border border-cosmic-border rounded-lg px-3 py-2 shadow-lg">
+      <p className="text-xs text-orbital-text-faint">{label}</p>
+      <p className="text-sm font-semibold text-orbital-text">{point.value}</p>
     </div>
   );
 }

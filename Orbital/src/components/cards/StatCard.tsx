@@ -14,9 +14,9 @@ interface StatCardProps {
 
 export default function StatCard({ icon: Icon, label, value, delta, accentColor, sparklineData, badge }: StatCardProps) {
   return (
-    <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl">
+    <div className="p-5 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-slate-400">{label}</span>
+        <span className="text-sm text-orbital-text-muted">{label}</span>
         {badge ?? (
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -27,9 +27,9 @@ export default function StatCard({ icon: Icon, label, value, delta, accentColor,
         )}
       </div>
 
-      <div className="mt-3 text-3xl font-bold text-white tracking-tight">{value}</div>
+      <div className="mt-3 text-3xl font-bold text-orbital-text tracking-tight">{value}</div>
 
-      {delta && <p className="mt-1 text-xs text-slate-500">{delta}</p>}
+      {delta && <p className="mt-1 text-xs text-orbital-text-faint">{delta}</p>}
 
       {sparklineData && (
         <div className="mt-3">

@@ -14,15 +14,15 @@ interface TaskBreakdownChartProps {
 
 export default function TaskBreakdownChart({ data }: TaskBreakdownChartProps) {
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-      <h3 className="text-sm font-semibold text-slate-300">Task breakdown by status</h3>
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
+      <h3 className="text-sm font-semibold text-orbital-text">Task breakdown by status</h3>
       <div className="mt-4 h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-            <CartesianGrid vertical={false} stroke="#1e293b" strokeDasharray="0" />
-            <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 12 }} axisLine={{ stroke: '#334155' }} tickLine={false} />
-            <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
-            <Tooltip content={ChartTooltip} cursor={{ fill: '#1e293b', opacity: 0.4 }} />
+            <CartesianGrid vertical={false} stroke="#22232f" strokeDasharray="0" />
+            <XAxis dataKey="label" tick={{ fill: '#5b5d70', fontSize: 12 }} axisLine={{ stroke: '#22232f' }} tickLine={false} />
+            <YAxis allowDecimals={false} tick={{ fill: '#5b5d70', fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
+            <Tooltip content={ChartTooltip} cursor={{ fill: '#22232f', opacity: 0.4 }} />
             <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={24}>
               {data.map((entry) => (
                 <Cell key={entry.status} fill={ORDINAL_RAMP[STATUS_INDEX[entry.status]]} />
