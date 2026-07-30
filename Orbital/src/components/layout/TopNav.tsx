@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LogOut, Menu, Pencil, X } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
+import WhatsNewTrigger from '../changelog/WhatsNewTrigger';
 import NotificationToggle from '../notifications/NotificationToggle';
 import EditProfileModal from '../profile/EditProfileModal';
 import { TABS, TAB_PATHS } from '../../lib/navTabs';
@@ -34,6 +35,7 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
 
   const initials = userEmail.slice(0, 2).toUpperCase();
@@ -95,7 +97,12 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
                   Edit profile
                 </button>
 
-                <WhatsNewModal onOpen={() => setAvatarOpen(false)} />
+                <WhatsNewTrigger
+                  onOpen={() => {
+                    setWhatsNewOpen(true);
+                    setAvatarOpen(false);
+                  }}
+                />
 
                 <button
                   onClick={onSignOut}
@@ -129,6 +136,7 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
       )}
 
       <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} profile={profile} userEmail={userEmail} onSave={onUpdateProfile} />
+      <WhatsNewModal open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
     </div>
   );
 }

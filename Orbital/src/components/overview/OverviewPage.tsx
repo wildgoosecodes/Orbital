@@ -6,12 +6,14 @@ import TodaysTasksCard from './TodaysTasksCard';
 import GoalsProgressCard from './GoalsProgressCard';
 import QuickActionsCard from './QuickActionsCard';
 import WeatherCard from './WeatherCard';
-import QuoteCard from './QuoteCard';
+import UpcomingEventsCard from './UpcomingEventsCard';
+import RecentActivityCard from './RecentActivityCard';
 import CosmicHero from './CosmicHero';
 import ConsistencyHeatmap from './ConsistencyHeatmap';
 import { useTasks } from '../../hooks/useTasks';
 import { useHabits } from '../../hooks/useHabits';
 import { useGoals } from '../../hooks/useGoals';
+import { useEvents } from '../../hooks/useEvents';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { todayStr } from '../../lib/habitStreak';
 import {
@@ -39,6 +41,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
   const { habits, loading: habitsLoading } = useHabits(userId);
   const { goals, loading: goalsLoading } = useGoals(userId);
+  const { events, loading: eventsLoading } = useEvents(userId);
   const { last7Days, loading: analyticsLoading } = useAnalytics(userId);
 
   const goalTitleById = new Map(goals.map((g) => [g.id, g.title]));
@@ -67,7 +70,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <WeatherCard city={profile?.city ?? null} />
-        <QuoteCard />
+        <UpcomingEventsCard events={events} loading={eventsLoading} onNavigate={onNavigate} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -115,6 +118,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
         <div className="space-y-4">
           <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />
           <QuickActionsCard onNavigate={onNavigate} />
+          <RecentActivityCard tasks={tasks} habits={habits} loading={tasksLoading || habitsLoading} />
         </div>
       </div>
 

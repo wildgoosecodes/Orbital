@@ -1,5 +1,6 @@
 import { Mic, Plus } from 'lucide-react';
 import { greetingForHour } from '../../lib/overviewStats';
+import QuoteCard from './QuoteCard';
 
 interface CosmicHeroProps {
   name: string;
@@ -67,6 +68,10 @@ export default function CosmicHero({
       <p className="relative text-sm font-semibold text-orbital-text-muted">
         {greetingForHour()}, {name} 👋
       </p>
+
+      <div className="relative w-full max-w-lg">
+        <QuoteCard />
+      </div>
 
       <button
         onClick={onOpenVoiceMode}
