@@ -31,5 +31,12 @@ export function useProfile(userId: string) {
     await refresh();
   }
 
-  return { profile, loading, completeOnboarding };
+  async function updateProfile(updates: { display_name?: string; city?: string | null }) {
+    if (!userId) return;
+    const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+    if (error) throw error;
+    await refresh();
+  }
+
+  return { profile, loading, completeOnboarding, updateProfile };
 }

@@ -18,6 +18,7 @@ export interface Task {
 export interface Profile {
   id: string;
   display_name: string | null;
+  city: string | null;
   onboarding_completed_at: string | null;
   created_at: string;
 }

@@ -5,6 +5,8 @@ import WeeklyProgressChart from '../charts/WeeklyProgressChart';
 import TodaysTasksCard from './TodaysTasksCard';
 import GoalsProgressCard from './GoalsProgressCard';
 import QuickActionsCard from './QuickActionsCard';
+import WeatherCard from './WeatherCard';
+import QuoteCard from './QuoteCard';
 import { useTasks } from '../../hooks/useTasks';
 import { useHabits } from '../../hooks/useHabits';
 import { useGoals } from '../../hooks/useGoals';
@@ -19,15 +21,18 @@ import {
   bestEverStreak,
 } from '../../lib/overviewStats';
 import type { Tab } from '../layout/Sidebar';
+import type { Profile } from '../../types/database';
 
 interface OverviewPageProps {
   userId: string;
   userEmail: string;
+  profile: Profile | null;
   onNavigate: (tab: Tab) => void;
 }
 
-export default function OverviewPage({ userId, userEmail, onNavigate }: OverviewPageProps) {
-  const name = displayNameFromEmail(userEmail);
+export default function OverviewPage({ userId, userEmail, profile, onNavigate }: OverviewPageProps) {
+  const name =
+    profile?.display_name && profile.display_name !== userEmail ? profile.display_name : displayNameFromEmail(userEmail);
   const { tasks, loading: tasksLoading, setStatus } = useTasks(userId);
   const { habits, loading: habitsLoading } = useHabits(userId);
   const { goals, loading: goalsLoading } = useGoals(userId);
@@ -48,6 +53,11 @@ export default function OverviewPage({ userId, userEmail, onNavigate }: Overview
           {greetingForHour()}, {name} 👋
         </h2>
         <p className="text-sm text-slate-400">Here's what's happening with your productivity today.</p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <WeatherCard city={profile?.city ?? null} />
+        <QuoteCard />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

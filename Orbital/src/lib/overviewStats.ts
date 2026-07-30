@@ -5,9 +5,11 @@ import { calculateStreak, longestStreak } from './habitStreak';
 
 export function greetingForHour(date: Date = new Date()): string {
   const hour = date.getHours();
+  if (hour < 5) return 'Good night';
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 22) return 'Good evening';
+  return 'Good night';
 }
 
 export function displayNameFromEmail(email: string): string {

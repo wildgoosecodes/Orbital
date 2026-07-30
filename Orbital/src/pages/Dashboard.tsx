@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [voiceModeOpen, setVoiceModeOpen] = useState(false);
   const { session } = useAuth();
-  const { profile, loading: profileLoading } = useProfile(session?.user.id ?? '');
+  const { profile, loading: profileLoading, updateProfile } = useProfile(session?.user.id ?? '');
   const location = useLocation();
   const navigate = useNavigate();
   // One shared conversation — the desktop-sidebar and mobile-tab assistant panels
@@ -53,6 +53,8 @@ export default function Dashboard() {
           onClose={() => setSidebarOpen(false)}
           userId={userId}
           userEmail={userEmail}
+          profile={profile}
+          onUpdateProfile={updateProfile}
           onSignOut={() => supabase.auth.signOut()}
         />
       }
@@ -90,7 +92,10 @@ export default function Dashboard() {
             </div>
           ) : (
             <Routes>
-              <Route index element={<OverviewPage userId={userId} userEmail={userEmail} onNavigate={handleNavigate} />} />
+              <Route
+                index
+                element={<OverviewPage userId={userId} userEmail={userEmail} profile={profile} onNavigate={handleNavigate} />}
+              />
               <Route
                 path="assistant"
                 element={

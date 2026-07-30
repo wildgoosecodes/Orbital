@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Repeat2, Sparkles } from 'lucide-react';
+import { BarChart3, CalendarDays, CheckSquare, LayoutDashboard, LogOut, Map, Pencil, Repeat2, Sparkles } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
 import NotificationToggle from '../notifications/NotificationToggle';
+import EditProfileModal from '../profile/EditProfileModal';
+import type { Profile } from '../../types/database';
 
 export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'roadmap' | 'analytics' | 'assistant';
 
@@ -11,6 +14,8 @@ interface SidebarProps {
   onClose: () => void;
   userId: string;
   userEmail: string;
+  profile: Profile | null;
+  onUpdateProfile: (updates: { display_name: string; city: string | null }) => Promise<void>;
   onSignOut: () => void;
 }
 
@@ -35,7 +40,7 @@ export const TAB_PATHS: Record<Tab, string> = {
   assistant: '/app/assistant',
 };
 
-export default function Sidebar({ open, onClose, userId, userEmail, onSignOut }: SidebarProps) {
+export default function Sidebar({ open, onClose, userId, userEmail, profile, onUpdateProfile, onSignOut }: SidebarProps) {
   const nav = (
     <>
       <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
@@ -84,21 +89,51 @@ export default function Sidebar({ open, onClose, userId, userEmail, onSignOut }:
         }`}
       >
         <div>{nav}</div>
-        <ProfileCard userId={userId} userEmail={userEmail} onSignOut={onSignOut} />
+        <ProfileCard
+          userId={userId}
+          userEmail={userEmail}
+          profile={profile}
+          onUpdateProfile={onUpdateProfile}
+          onSignOut={onSignOut}
+        />
       </aside>
     </>
   );
 }
 
-function ProfileCard({ userId, userEmail, onSignOut }: { userId: string; userEmail: string; onSignOut: () => void }) {
+function ProfileCard({
+  userId,
+  userEmail,
+  profile,
+  onUpdateProfile,
+  onSignOut,
+}: {
+  userId: string;
+  userEmail: string;
+  profile: Profile | null;
+  onUpdateProfile: (updates: { display_name: string; city: string | null }) => Promise<void>;
+  onSignOut: () => void;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
   const initials = userEmail.slice(0, 2).toUpperCase();
+  const displayName = profile?.display_name && profile.display_name !== userEmail ? profile.display_name : null;
 
   return (
     <div className="p-4 border-t border-slate-800 flex items-center gap-2">
       <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
         {initials}
       </div>
-      <p className="flex-1 min-w-0 text-xs text-slate-400 truncate">{userEmail}</p>
+      <div className="flex-1 min-w-0">
+        {displayName && <p className="text-xs font-semibold text-slate-200 truncate">{displayName}</p>}
+        <p className="text-xs text-slate-400 truncate">{userEmail}</p>
+      </div>
+      <button
+        onClick={() => setEditOpen(true)}
+        aria-label="Edit profile"
+        className="text-slate-500 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-900 flex-shrink-0"
+      >
+        <Pencil size={15} strokeWidth={2} />
+      </button>
       <NotificationToggle userId={userId} />
       <button
         onClick={onSignOut}
@@ -107,6 +142,14 @@ function ProfileCard({ userId, userEmail, onSignOut }: { userId: string; userEma
       >
         <LogOut size={16} strokeWidth={2} />
       </button>
+
+      <EditProfileModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        profile={profile}
+        userEmail={userEmail}
+        onSave={onUpdateProfile}
+      />
     </div>
   );
 }
