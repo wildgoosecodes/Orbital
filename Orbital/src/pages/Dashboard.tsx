@@ -5,6 +5,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import Header from '../components/layout/Header';
 import Sidebar, { TABS, type Tab } from '../components/layout/Sidebar';
 import AIAssistantPanel from '../components/assistant/AIAssistantPanel';
+import VoiceMode from '../components/assistant/VoiceMode';
 import TaskList from '../components/tasks/TaskList';
 import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
@@ -19,6 +20,7 @@ import { supabase } from '../lib/supabaseClient';
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false);
   const { session } = useAuth();
   const { profile, loading: profileLoading } = useProfile(session?.user.id ?? '');
   // One shared conversation — the desktop-sidebar and mobile-tab assistant panels
@@ -47,8 +49,15 @@ export default function Dashboard() {
         />
       }
       header={<Header onMenuClick={() => setSidebarOpen(true)} />}
-      assistant={<AIAssistantPanel {...assistantChat} />}
+      assistant={<AIAssistantPanel {...assistantChat} onOpenVoiceMode={() => setVoiceModeOpen(true)} />}
     >
+      <VoiceMode
+        open={voiceModeOpen}
+        onClose={() => setVoiceModeOpen(false)}
+        messages={assistantChat.messages}
+        sendMessage={assistantChat.sendMessage}
+      />
+
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -62,7 +71,7 @@ export default function Dashboard() {
 
           {activeTab === 'assistant' && (
             <div className="h-[calc(100dvh-8rem)] xl:hidden bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-              <AIAssistantPanel {...assistantChat} />
+              <AIAssistantPanel {...assistantChat} onOpenVoiceMode={() => setVoiceModeOpen(true)} />
             </div>
           )}
 

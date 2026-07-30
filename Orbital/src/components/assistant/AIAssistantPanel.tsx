@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Send, Sparkles } from 'lucide-react';
+import { Mic, Send, Sparkles } from 'lucide-react';
 import type { ChatMessage } from '../../hooks/useAssistantChat';
 
 const SUGGESTIONS = [
@@ -14,9 +14,10 @@ interface AIAssistantPanelProps {
   sending: boolean;
   error: string | null;
   sendMessage: (text: string) => void;
+  onOpenVoiceMode?: () => void;
 }
 
-export default function AIAssistantPanel({ messages, sending, error, sendMessage }: AIAssistantPanelProps) {
+export default function AIAssistantPanel({ messages, sending, error, sendMessage, onOpenVoiceMode }: AIAssistantPanelProps) {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -37,11 +38,20 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 pb-4 border-b border-slate-800">
+      <div className="p-6 pb-4 border-b border-slate-800 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
           <Sparkles size={14} className="text-indigo-400" />
           Assistant
         </h2>
+        {onOpenVoiceMode && (
+          <button
+            onClick={onOpenVoiceMode}
+            aria-label="Open voice mode"
+            className="text-slate-500 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-900 transition-colors"
+          >
+            <Mic size={16} strokeWidth={1.5} />
+          </button>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">

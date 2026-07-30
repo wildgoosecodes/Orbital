@@ -20,9 +20,13 @@ export function useAssistantChat() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function sendMessage(text: string) {
+  /** Returns the assistant's reply text (or undefined on error) — voice mode
+   *  needs the reply directly to speak it, rather than reading it back out
+   *  of `messages`, which wouldn't have re-rendered yet at the point this
+   *  promise resolves. */
+  async function sendMessage(text: string): Promise<string | undefined> {
     const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending) return undefined;
 
     const nextMessages: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(nextMessages);
@@ -36,9 +40,12 @@ export function useAssistantChat() {
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
 
-      setMessages([...nextMessages, { role: 'assistant', content: data.reply as string }]);
+      const reply = data.reply as string;
+      setMessages([...nextMessages, { role: 'assistant', content: reply }]);
+      return reply;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong reaching the assistant.');
+      return undefined;
     } finally {
       setSending(false);
     }

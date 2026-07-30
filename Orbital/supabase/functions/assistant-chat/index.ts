@@ -13,12 +13,14 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, goals, and roadmaps.
+const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, goals, roadmaps, and calendar events.
 Be concise and conversational — this renders in a narrow chat panel, not a document.
 Use the tools to read the user's real data before answering questions about it; never guess at counts or status.
 When the user asks you to create, update, complete, or delete something, use the matching tool rather than just describing what you'd do.
-Dates are ISO strings (YYYY-MM-DD). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
+Dates are ISO strings (YYYY-MM-DD); event times are ISO datetimes (YYYY-MM-DDTHH:mm:ss). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
 If a request is ambiguous (e.g. which task they mean among several similar ones), ask a short clarifying question instead of guessing.
+
+Tasks vs Events: a Task is a to-do with just a due date, no specific time — use it for things to get done sometime that day. An Event has a specific start time (a meeting, appointment, or timed reminder) and an optional reminder that sends a push notification before it starts — use it whenever the user mentions a time ("at 3pm", "10am tomorrow") or asks to be reminded of something.
 
 The roadmap is a hierarchy: Year Goal → Milestones → Goals (weekly/quarterly/yearly) → Tasks or Habits. Tasks are for one-off deliverables; Habits are for building consistency toward a goal. A Goal, Task, or Habit created without a link up the chain is disconnected from the user's plan — avoid that by default.
 When the user asks for planning help (e.g. "help me set my quarterly goals", "what should I work on", "break this down"), call list_roadmap first. Look for Year Goals/Milestones that have no quarterly Goals yet, or Goals with nothing under them, and propose a short numbered list of suggested quarterly Goals and/or Tasks/Habits to fill the gap. Ask the user to confirm (or say which ones) before creating anything beyond one obvious, explicitly-requested item.
@@ -209,6 +211,57 @@ const tools: ToolDef[] = [
       },
       required: ['year_goal_id', 'title'],
     },
+  },
+  {
+    name: 'list_events',
+    description: "List the user's calendar events, optionally within a date range.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        from: { type: 'string', description: 'ISO datetime lower bound (inclusive), omit for no lower bound.' },
+        to: { type: 'string', description: 'ISO datetime upper bound (exclusive), omit for no upper bound.' },
+      },
+    },
+  },
+  {
+    name: 'create_event',
+    description: 'Create a calendar event with a specific start time — for meetings, appointments, or timed reminders. Distinct from a Task, which has no time-of-day.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        location: { type: 'string' },
+        start_at: { type: 'string', description: 'ISO datetime, e.g. 2026-08-01T15:00:00' },
+        end_at: { type: 'string', description: 'Optional ISO datetime.' },
+        all_day: { type: 'boolean', description: 'Defaults to false.' },
+        reminder_minutes_before: { type: 'number', description: 'Minutes before start_at to send a push notification reminder. Omit for no reminder.' },
+      },
+      required: ['title', 'start_at'],
+    },
+  },
+  {
+    name: 'update_event',
+    description: "Update an event's title, time, location, description, or reminder.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        event_id: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        location: { type: 'string' },
+        start_at: { type: 'string' },
+        end_at: { type: 'string' },
+        all_day: { type: 'boolean' },
+        reminder_minutes_before: { type: 'number' },
+      },
+      required: ['event_id'],
+    },
+  },
+  {
+    name: 'delete_event',
+    description: 'Delete a calendar event permanently.',
+    input_schema: { type: 'object', properties: { event_id: { type: 'string' } }, required: ['event_id'] },
   },
 ];
 
@@ -425,6 +478,48 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
         .single();
       if (error) throw error;
       return data;
+    }
+    case 'list_events': {
+      let query = supabase.from('events').select('*').order('start_at', { ascending: true });
+      if (input.from) query = query.gte('start_at', input.from as string);
+      if (input.to) query = query.lt('start_at', input.to as string);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    }
+    case 'create_event': {
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          user_id: userId,
+          title: input.title,
+          description: input.description ?? null,
+          location: input.location ?? null,
+          start_at: input.start_at,
+          end_at: input.end_at ?? null,
+          all_day: input.all_day ?? false,
+          reminder_minutes_before: input.reminder_minutes_before ?? null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+    case 'update_event': {
+      const { event_id, ...rest } = input as { event_id: string; [k: string]: unknown };
+      const { data, error } = await supabase
+        .from('events')
+        .update({ ...rest, reminder_sent_at: null, updated_at: new Date().toISOString() })
+        .eq('id', event_id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+    case 'delete_event': {
+      const { error } = await supabase.from('events').delete().eq('id', input.event_id as string);
+      if (error) throw error;
+      return { deleted: true };
     }
     default:
       throw new Error(`Unknown tool: ${name}`);

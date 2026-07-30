@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 /** Newest first. Add a new entry here whenever a shipped batch of work is worth telling users about. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3',
+    date: '2026-07-29',
+    features: [
+      {
+        title: 'Calendar events',
+        description: 'Add, edit, and delete timed events (not just tasks) on the Calendar tab, with a merged day overview.',
+      },
+      {
+        title: 'Event reminders',
+        description: 'Set a reminder on any event and get a push notification before it starts.',
+      },
+      {
+        title: 'Import from Google Calendar',
+        description: 'Pull your existing Google Calendar events into Orbital in one click.',
+      },
+      {
+        title: 'Talk to your assistant',
+        description: 'Tap the mic icon on the Assistant panel for a full-screen voice mode — ask a question out loud and hear it answered back.',
+      },
+    ],
+  },
+  {
     version: '0.2',
     date: '2026-07-26',
     features: [

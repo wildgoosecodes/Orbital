@@ -75,6 +75,22 @@ export interface Milestone {
   updated_at: string;
 }
 
+export interface Event {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  start_at: string;
+  end_at: string | null;
+  all_day: boolean;
+  reminder_minutes_before: number | null;
+  reminder_sent_at: string | null;
+  google_event_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type YearGoalStatus = 'active' | 'completed' | 'abandoned';
 
 export interface YearGoal {
