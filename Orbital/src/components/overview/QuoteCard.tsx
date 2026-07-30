@@ -23,17 +23,17 @@ export default function QuoteCard() {
   if (error) return null;
 
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3">
-      <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0">
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl flex items-start gap-3">
+      <div className="w-10 h-10 rounded-lg bg-orbital-accent-1/10 text-orbital-accent-2 flex items-center justify-center flex-shrink-0">
         <Quote size={18} strokeWidth={2} />
       </div>
       {quote ? (
         <div className="min-w-0">
-          <p className="text-sm text-slate-200 italic leading-snug">"{quote.quote}"</p>
-          <p className="mt-1 text-xs text-slate-500">— {quote.author}</p>
+          <p className="text-sm text-orbital-text italic leading-snug">"{quote.quote}"</p>
+          <p className="mt-1 text-xs text-orbital-text-faint">— {quote.author}</p>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">Loading today's quote…</p>
+        <p className="text-sm text-orbital-text-faint">Loading today's quote…</p>
       )}
     </div>
   );

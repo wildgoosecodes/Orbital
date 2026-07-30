@@ -41,10 +41,10 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed inset-0 z-50 bg-cosmic-bg/95 backdrop-blur-sm flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 max-w-md w-full mx-auto">
         {messages.length === 0 && (
-          <p className="text-center text-sm text-slate-500 mt-8">Tap the mic and say something.</p>
+          <p className="text-center text-sm text-orbital-text-faint mt-8">Tap the mic and say something.</p>
         )}
 
         {messages.map((m, i) => (
@@ -52,8 +52,8 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
             <div
               className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === 'user'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-900 border border-slate-800 text-slate-200'
+                  ? 'bg-orbital-accent-1 text-orbital-text'
+                  : 'bg-cosmic-surface-2 border border-cosmic-border text-orbital-text'
               }`}
             >
               {m.content}
@@ -81,29 +81,29 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
           <span
             className={`absolute inset-0 rounded-full transition-colors ${
               status === 'listening'
-                ? 'bg-indigo-500/30 animate-pulse'
+                ? 'bg-orbital-accent-1/30 animate-pulse'
                 : status === 'thinking' || status === 'transcribing'
-                  ? 'bg-indigo-500/20 animate-pulse'
+                  ? 'bg-orbital-accent-1/20 animate-pulse'
                   : status === 'speaking'
                     ? 'bg-emerald-500/25 animate-pulse'
-                    : 'bg-slate-800'
+                    : 'bg-cosmic-surface-2'
             }`}
           />
           <span
             className={`relative w-20 h-20 rounded-full flex items-center justify-center ${
-              status === 'error' ? 'bg-rose-600' : 'bg-indigo-600'
+              status === 'error' ? 'bg-rose-600' : 'bg-orbital-accent-1'
             }`}
           >
-            <Mic size={28} className="text-white" strokeWidth={1.5} />
+            <Mic size={28} className="text-orbital-text" strokeWidth={1.5} />
           </span>
         </button>
 
-        <p className="text-sm font-medium text-slate-300">{STATUS_LABEL[status]}</p>
+        <p className="text-sm font-medium text-orbital-text-muted">{STATUS_LABEL[status]}</p>
 
         <button
           onClick={onClose}
           aria-label="Close voice mode"
-          className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-900"
+          className="mt-2 flex items-center gap-1.5 text-sm text-orbital-text-faint hover:text-orbital-text-muted px-4 py-2 rounded-lg hover:bg-cosmic-surface-2"
         >
           <X size={16} />
           Close

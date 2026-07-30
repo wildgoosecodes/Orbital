@@ -19,20 +19,20 @@ export default function GoalsProgressCard({ goals, loading, onNavigate }: GoalsP
   const active = goals.filter((g) => g.status === 'active').slice(0, 3);
 
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-300">Goals Progress</h3>
+        <h3 className="text-sm font-semibold text-orbital-text">Goals Progress</h3>
         <button
           onClick={() => onNavigate('roadmap')}
-          className="text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1"
+          className="text-xs font-semibold text-orbital-text-muted hover:text-orbital-text border border-cosmic-border rounded-lg px-2.5 py-1"
         >
           View all
         </button>
       </div>
 
       <div className="mt-4 space-y-3">
-        {loading && <p className="text-sm text-slate-500">Loading goals...</p>}
-        {!loading && active.length === 0 && <p className="text-sm text-slate-500">No active goals yet.</p>}
+        {loading && <p className="text-sm text-orbital-text-faint">Loading goals...</p>}
+        {!loading && active.length === 0 && <p className="text-sm text-orbital-text-faint">No active goals yet.</p>}
 
         {active.map((goal) => {
           const { icon: Icon, color } = PERIOD_ICON[goal.period_type];

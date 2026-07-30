@@ -62,21 +62,21 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-slate-950 border border-slate-800 rounded-xl p-6"
+            className="w-full max-w-sm bg-cosmic-surface-2 border border-cosmic-border rounded-xl p-6"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <User size={18} className="text-indigo-400" />
+              <h2 className="text-lg font-bold text-orbital-text flex items-center gap-2">
+                <User size={18} className="text-orbital-accent-2" />
                 Edit profile
               </h2>
-              <button onClick={onClose} aria-label="Close" className="text-slate-500 hover:text-slate-200 p-1">
+              <button onClick={onClose} aria-label="Close" className="text-orbital-text-faint hover:text-orbital-text p-1">
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="edit-profile-name" className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label htmlFor="edit-profile-name" className="block text-xs font-semibold text-orbital-text-muted mb-1.5">
                   Name
                 </label>
                 <input
@@ -84,12 +84,12 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="What should we call you?"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1"
                 />
               </div>
 
               <div>
-                <label htmlFor="edit-profile-city" className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label htmlFor="edit-profile-city" className="block text-xs font-semibold text-orbital-text-muted mb-1.5">
                   City
                 </label>
                 <input
@@ -97,7 +97,7 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="For weather, if location access is off"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1"
                 />
               </div>
 
@@ -106,14 +106,14 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
               <div className="flex items-center justify-end gap-2 pt-1">
                 <button
                   onClick={onClose}
-                  className="text-sm font-semibold text-slate-400 hover:text-slate-200 px-3 py-2 rounded-lg hover:bg-slate-900"
+                  className="text-sm font-semibold text-orbital-text-muted hover:text-orbital-text px-3 py-2 rounded-lg hover:bg-cosmic-surface-3"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg"
+                  className="text-sm font-semibold text-orbital-text bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 px-4 py-2 rounded-lg"
                 >
                   {saving ? 'Saving…' : 'Save'}
                 </button>

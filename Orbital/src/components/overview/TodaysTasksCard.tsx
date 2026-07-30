@@ -12,7 +12,7 @@ interface TodaysTasksCardProps {
 }
 
 const PRIORITY_STYLES: Record<Task['priority'], string> = {
-  low: 'bg-slate-800 text-slate-400',
+  low: 'bg-cosmic-surface-3 text-orbital-text-muted',
   medium: 'bg-amber-500/10 text-amber-400',
   high: 'bg-rose-500/10 text-rose-400',
 };
@@ -21,20 +21,20 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
   const visible = sortForOverview(tasks).slice(0, 4);
 
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-300">Today's Tasks</h3>
+        <h3 className="text-sm font-semibold text-orbital-text">Today's Tasks</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onNavigate('tasks')}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1"
+            className="text-xs font-semibold text-orbital-text-muted hover:text-orbital-text border border-cosmic-border rounded-lg px-2.5 py-1"
           >
             View all
           </button>
           <button
             onClick={() => onNavigate('tasks')}
             aria-label="Add task"
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-orbital-accent-1 hover:bg-orbital-accent-1/90 text-orbital-text"
           >
             <Plus size={14} strokeWidth={2.5} />
           </button>
@@ -42,19 +42,19 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
       </div>
 
       <div className="mt-4 space-y-2">
-        {loading && <p className="text-sm text-slate-500">Loading tasks...</p>}
-        {!loading && visible.length === 0 && <p className="text-sm text-slate-500">No tasks yet.</p>}
+        {loading && <p className="text-sm text-orbital-text-faint">Loading tasks...</p>}
+        {!loading && visible.length === 0 && <p className="text-sm text-orbital-text-faint">No tasks yet.</p>}
 
         {visible.map((task) => {
           const done = task.status === 'done';
           const goalTitle = task.goal_id ? goalTitleById?.get(task.goal_id) : undefined;
           return (
-            <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-lg">
+            <div key={task.id} className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg">
               <button
                 onClick={() => onToggleDone(task.id, done ? 'todo' : 'done')}
                 aria-label={done ? 'Mark as not done' : 'Mark as done'}
                 className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-                  done ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+                  done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
                 }`}
               >
                 {done && (
@@ -65,7 +65,7 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
               </button>
 
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${done ? 'text-slate-500 line-through' : 'text-white'}`}>
+                <p className={`text-sm font-medium ${done ? 'text-orbital-text-faint line-through' : 'text-orbital-text'}`}>
                   {task.title}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
@@ -73,14 +73,14 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
                     {task.priority}
                   </span>
                   {task.due_date && (
-                    <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <span className="flex items-center gap-1 text-[11px] text-orbital-text-faint">
                       <Calendar size={11} />
                       {task.due_date}
                     </span>
                   )}
                 </div>
                 {goalTitle && (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] text-indigo-400/80 truncate">
+                  <p className="mt-1 flex items-center gap-1 text-[11px] text-orbital-accent-2/80 truncate">
                     <Milestone size={11} className="flex-shrink-0" />
                     {goalTitle}
                   </p>
@@ -93,7 +93,7 @@ export default function TodaysTasksCard({ tasks, loading, onToggleDone, onNaviga
 
       <button
         onClick={() => onNavigate('tasks')}
-        className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-300"
+        className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-orbital-text-faint hover:text-orbital-text-muted"
       >
         <Plus size={14} /> Add new task
       </button>

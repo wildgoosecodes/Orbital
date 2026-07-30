@@ -66,17 +66,17 @@ export default function WeatherCard({ city }: WeatherCardProps) {
 
   if (status === 'loading') {
     return (
-      <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center">
-        <p className="text-sm text-slate-500">Loading weather…</p>
+      <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl flex items-center">
+        <p className="text-sm text-orbital-text-faint">Loading weather…</p>
       </div>
     );
   }
 
   if (status === 'no-location') {
     return (
-      <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-2">
-        <MapPin size={16} className="text-slate-600 flex-shrink-0" />
-        <p className="text-sm text-slate-500">Add your city in your profile to see weather here.</p>
+      <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl flex items-center gap-2">
+        <MapPin size={16} className="text-orbital-text-faint flex-shrink-0" />
+        <p className="text-sm text-orbital-text-faint">Add your city in your profile to see weather here.</p>
       </div>
     );
   }
@@ -85,13 +85,13 @@ export default function WeatherCard({ city }: WeatherCardProps) {
   const { label, icon: Icon } = weatherCodeInfo(weather.code);
 
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-3">
-      <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0">
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl flex items-center gap-3">
+      <div className="w-10 h-10 rounded-lg bg-orbital-accent-1/10 text-orbital-accent-2 flex items-center justify-center flex-shrink-0">
         <Icon size={20} strokeWidth={2} />
       </div>
       <div className="min-w-0">
-        <p className="text-xl font-bold text-white leading-tight">{weather.temperature}°F</p>
-        <p className="text-xs text-slate-500 truncate">{label}</p>
+        <p className="text-xl font-bold text-orbital-text leading-tight">{weather.temperature}°F</p>
+        <p className="text-xs text-orbital-text-faint truncate">{label}</p>
       </div>
     </div>
   );

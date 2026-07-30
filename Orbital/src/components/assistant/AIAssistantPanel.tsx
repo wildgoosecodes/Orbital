@@ -38,16 +38,16 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 pb-4 border-b border-slate-800 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-          <Sparkles size={14} className="text-indigo-400" />
+      <div className="p-6 pb-4 border-b border-cosmic-border flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-orbital-text uppercase tracking-wider flex items-center gap-2">
+          <Sparkles size={14} className="text-orbital-accent-2" />
           Assistant
         </h2>
         {onOpenVoiceMode && (
           <button
             onClick={onOpenVoiceMode}
             aria-label="Open voice mode"
-            className="text-slate-500 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-900 transition-colors"
+            className="text-orbital-text-faint hover:text-orbital-accent-2 p-1.5 rounded-lg hover:bg-cosmic-surface-2 transition-colors"
           >
             <Mic size={16} strokeWidth={1.5} />
           </button>
@@ -57,7 +57,7 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center px-2 gap-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-orbital-text-faint">
               Ask about your tasks, habits, and goals — or ask me to create, update, or complete them.
             </p>
             <div className="w-full space-y-2">
@@ -65,7 +65,7 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
                 <button
                   key={s}
                   onClick={() => handleSuggestion(s)}
-                  className="w-full text-left text-xs text-slate-400 bg-slate-900 hover:bg-slate-800 hover:text-slate-200 border border-slate-800 rounded-lg px-3 py-2 transition-colors"
+                  className="w-full text-left text-xs text-orbital-text-muted bg-cosmic-surface-2 hover:bg-cosmic-surface-3 hover:text-orbital-text border border-cosmic-border rounded-lg px-3 py-2 transition-colors"
                 >
                   {s}
                 </button>
@@ -79,8 +79,8 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
             <div
               className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                 m.role === 'user'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-900 border border-slate-800 text-slate-200'
+                  ? 'bg-orbital-accent-1 text-orbital-text'
+                  : 'bg-cosmic-surface-2 border border-cosmic-border text-orbital-text'
               }`}
             >
               {m.content}
@@ -90,7 +90,7 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
 
         {sending && (
           <div className="flex justify-start">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-500">
+            <div className="bg-cosmic-surface-2 border border-cosmic-border rounded-xl px-3 py-2 text-sm text-orbital-text-faint">
               Thinking…
             </div>
           </div>
@@ -105,19 +105,19 @@ export default function AIAssistantPanel({ messages, sending, error, sendMessage
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t border-slate-800 flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="p-4 border-t border-cosmic-border flex items-center gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask the assistant…"
           disabled={sending}
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+          className="flex-1 bg-cosmic-surface-2 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={sending || !input.trim()}
           aria-label="Send message"
-          className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg p-2.5 transition-colors"
+          className="flex-shrink-0 bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-40 text-orbital-text rounded-lg p-2.5 transition-colors"
         >
           <Send size={16} strokeWidth={2} />
         </button>

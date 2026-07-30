@@ -14,16 +14,16 @@ const ACTIONS: { label: string; tab: Tab; icon: typeof CheckSquare; color: strin
 
 export default function QuickActionsCard({ onNavigate }: QuickActionsCardProps) {
   return (
-    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
-      <h3 className="text-sm font-semibold text-slate-300">Quick Actions</h3>
+    <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
+      <h3 className="text-sm font-semibold text-orbital-text">Quick Actions</h3>
       <div className="mt-4 space-y-2">
         {ACTIONS.map(({ label, tab, icon: Icon, color }) => (
           <button
             key={label}
             onClick={() => onNavigate(tab)}
-            className="w-full flex items-center justify-between p-3 bg-slate-900/60 hover:bg-slate-900 rounded-lg transition-colors"
+            className="w-full flex items-center justify-between p-3 bg-cosmic-surface-3/60 hover:bg-cosmic-surface-3 rounded-lg transition-colors"
           >
-            <span className="text-sm font-medium text-slate-200">{label}</span>
+            <span className="text-sm font-medium text-orbital-text">{label}</span>
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: `${color}1a`, color }}
