@@ -73,3 +73,5 @@ export default defineConfig([
 ])
 
 ```
+
+<!-- verifying Vercel auto-deploy on push to main -->
