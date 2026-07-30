@@ -19,6 +19,21 @@ function speak(text: string, onDone: () => void) {
   window.speechSynthesis.speak(utterance);
 }
 
+/** iOS Safari only allows speechSynthesis.speak() to produce audio within an
+ *  active "user activation" window — by the time the real reply is ready, several
+ *  `await`s (getUserMedia, transcribe, chat) have passed since the tap that started
+ *  recording, so the browser silently drops it. Speaking a near-silent utterance
+ *  synchronously, in the same tap that starts recording, keeps speech "unlocked"
+ *  for the rest of that gesture's activation window, so the real reply — spoken
+ *  later, after those awaits — is still allowed to play. No-op on browsers that
+ *  don't have this restriction (desktop, Android). */
+function unlockSpeechSynthesis() {
+  if (!window.speechSynthesis) return;
+  const utterance = new SpeechSynthesisUtterance(' ');
+  utterance.volume = 0;
+  window.speechSynthesis.speak(utterance);
+}
+
 /** Watches amplitude on the given stream, reporting a live level for the orb
  *  animation and calling onSilence() once speaking has clearly stopped. */
 function startSilenceMonitor(stream: MediaStream, onLevel: (level: number) => void, onSilence: () => void) {
@@ -119,6 +134,7 @@ export function useVoiceAssistant({ sendMessage }: UseVoiceAssistantOptions) {
 
   const startRecording = useCallback(async () => {
     window.speechSynthesis?.cancel();
+    unlockSpeechSynthesis();
     setErrorMessage(null);
 
     let stream: MediaStream;
