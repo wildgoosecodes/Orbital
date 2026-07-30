@@ -45,13 +45,13 @@ export default function NotificationToggle({ userId }: NotificationToggleProps) 
         aria-label={subscribed ? 'Disable notifications' : 'Enable notifications'}
         aria-pressed={subscribed}
         className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-          subscribed ? 'text-indigo-400 hover:bg-slate-900' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-900'
+          subscribed ? 'text-orbital-accent-2 hover:bg-cosmic-surface-3' : 'text-orbital-text-faint hover:text-orbital-text hover:bg-cosmic-surface-3'
         }`}
       >
         {subscribed ? <Bell size={16} strokeWidth={2} /> : <BellOff size={16} strokeWidth={2} />}
       </button>
       {error && (
-        <p className="absolute bottom-full right-0 mb-1 w-44 text-[11px] text-rose-400 bg-slate-950 border border-rose-900/50 rounded-lg p-2 text-left">
+        <p className="absolute bottom-full right-0 mb-1 w-44 text-[11px] text-rose-400 bg-cosmic-surface-2 border border-rose-900/50 rounded-lg p-2 text-left">
           {error}
         </p>
       )}

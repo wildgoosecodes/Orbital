@@ -15,7 +15,7 @@ export default function LoadingScreen() {
   const particles = useMemo(() => buildParticles(18), []);
 
   return (
-    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col items-center justify-center gap-8 bg-slate-900 overflow-hidden">
+    <div className="min-h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col items-center justify-center gap-8 bg-cosmic-bg overflow-hidden">
       <div className="relative w-full h-full flex-1 max-h-[70vmin] flex items-center justify-center">
         <motion.div
           className="absolute rounded-full"
@@ -52,7 +52,7 @@ export default function LoadingScreen() {
 
       <div className="flex items-center gap-2">
         <OrbitalMark size={20} />
-        <span className="text-sm font-semibold tracking-widest text-slate-400 uppercase">Orbital</span>
+        <span className="text-sm font-semibold tracking-widest text-orbital-text-muted uppercase">Orbital</span>
       </div>
     </div>
   );

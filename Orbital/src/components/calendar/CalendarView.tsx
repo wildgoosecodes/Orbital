@@ -15,13 +15,13 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_FORMAT = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
 
 const PRIORITY_DOT: Record<Task['priority'], string> = {
-  low: 'bg-slate-500',
+  low: 'bg-orbital-text-faint',
   medium: 'bg-amber-500',
   high: 'bg-rose-500',
 };
 
 const PRIORITY_BADGE: Record<Task['priority'], string> = {
-  low: 'bg-slate-800 text-slate-400',
+  low: 'bg-cosmic-surface-3 text-orbital-text-muted',
   medium: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   high: 'bg-rose-500/10 text-rose-400 border border-rose-500/20',
 };
@@ -111,15 +111,15 @@ export default function CalendarView({ userId }: CalendarViewProps) {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
+      <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-200">{MONTH_FORMAT.format(viewDate)}</h3>
+          <h3 className="text-sm font-semibold text-orbital-text">{MONTH_FORMAT.format(viewDate)}</h3>
           <div className="flex items-center gap-1">
             {googleImport.enabled && (
               <button
                 onClick={googleImport.runImport}
                 disabled={googleImport.importing}
-                className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-200 disabled:opacity-50 border border-slate-800 rounded-lg px-2.5 py-1 mr-1"
+                className="flex items-center gap-1 text-xs font-semibold text-orbital-text-muted hover:text-orbital-text disabled:opacity-50 border border-cosmic-border rounded-lg px-2.5 py-1 mr-1"
               >
                 <Download size={12} />
                 {googleImport.importing ? 'Importing…' : 'Import from Google'}
@@ -127,21 +127,21 @@ export default function CalendarView({ userId }: CalendarViewProps) {
             )}
             <button
               onClick={goToToday}
-              className="text-xs font-semibold text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1 mr-1"
+              className="text-xs font-semibold text-orbital-text-muted hover:text-orbital-text border border-cosmic-border rounded-lg px-2.5 py-1 mr-1"
             >
               Today
             </button>
             <button
               onClick={() => goToMonth(-1)}
               aria-label="Previous month"
-              className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-900"
+              className="text-orbital-text-muted hover:text-orbital-text p-1.5 rounded-lg hover:bg-cosmic-surface-3"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => goToMonth(1)}
               aria-label="Next month"
-              className="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-900"
+              className="text-orbital-text-muted hover:text-orbital-text p-1.5 rounded-lg hover:bg-cosmic-surface-3"
             >
               <ChevronRight size={16} />
             </button>
@@ -155,7 +155,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
           </p>
         )}
 
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-500 mb-1">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-orbital-text-faint mb-1">
           {WEEKDAYS.map((d) => (
             <div key={d}>{d}</div>
           ))}
@@ -176,13 +176,13 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                 onClick={() => selectDay(key)}
                 className={`aspect-square p-1 rounded-lg flex flex-col items-center justify-start gap-0.5 border transition-colors ${
                   isSelected
-                    ? 'bg-indigo-600/20 border-indigo-500'
-                    : 'border-transparent hover:bg-slate-900'
+                    ? 'bg-orbital-accent-1/20 border-orbital-accent-1'
+                    : 'border-transparent hover:bg-cosmic-surface-3'
                 } ${!inMonth ? 'opacity-30' : ''}`}
               >
                 <span
                   className={`text-xs w-5 h-5 flex items-center justify-center rounded-full ${
-                    isToday ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-300'
+                    isToday ? 'bg-orbital-accent-1 text-orbital-text font-semibold' : 'text-orbital-text-muted'
                   }`}
                 >
                   {day.getDate()}
@@ -191,7 +191,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   {dayTasks.slice(0, 3).map((t) => (
                     <span key={t.id} className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[t.priority]}`} />
                   ))}
-                  {dayTasks.length > 3 && <span className="text-[9px] text-slate-500">+{dayTasks.length - 3}</span>}
+                  {dayTasks.length > 3 && <span className="text-[9px] text-orbital-text-faint">+{dayTasks.length - 3}</span>}
                   {dayEvents.length > 0 && <Clock size={9} className="text-sky-400" strokeWidth={2} />}
                 </div>
               </button>
@@ -200,9 +200,9 @@ export default function CalendarView({ userId }: CalendarViewProps) {
         </div>
       </div>
 
-      <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+      <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-300">
+          <h3 className="text-sm font-semibold text-orbital-text">
             {new Date(`${selectedKey}T00:00:00`).toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
@@ -212,7 +212,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
           {!addingEvent && (
             <button
               onClick={() => setAddingEvent(true)}
-              className="flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+              className="flex items-center gap-1 text-xs font-semibold text-orbital-accent-2 hover:text-orbital-accent-2/80"
             >
               <Plus size={14} /> Add event
             </button>
@@ -230,21 +230,21 @@ export default function CalendarView({ userId }: CalendarViewProps) {
           />
         )}
 
-        {loading && <p className="text-sm text-slate-500">Loading...</p>}
+        {loading && <p className="text-sm text-orbital-text-faint">Loading...</p>}
         {!loading && !hasAnyItems && !addingEvent && (
-          <p className="text-sm text-slate-500">Nothing scheduled this day.</p>
+          <p className="text-sm text-orbital-text-faint">Nothing scheduled this day.</p>
         )}
 
         <div className="space-y-2">
           {selectedTasks.map((task) => {
             const done = task.status === 'done';
             return (
-              <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-lg">
+              <div key={task.id} className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg">
                 <button
                   onClick={() => setStatus(task.id, done ? 'todo' : 'done')}
                   aria-label={done ? 'Mark as not done' : 'Mark as done'}
                   className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-                    done ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+                    done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
                   }`}
                 >
                   {done && (
@@ -254,7 +254,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   )}
                 </button>
 
-                <p className={`flex-1 min-w-0 text-sm font-medium truncate ${done ? 'text-slate-500 line-through' : 'text-white'}`}>
+                <p className={`flex-1 min-w-0 text-sm font-medium truncate ${done ? 'text-orbital-text-faint line-through' : 'text-orbital-text'}`}>
                   {task.title}
                 </p>
 
@@ -267,7 +267,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Add to Google Calendar"
-                  className="text-slate-500 hover:text-sky-400 p-1"
+                  className="text-orbital-text-faint hover:text-sky-400 p-1"
                 >
                   <CalendarPlus size={16} strokeWidth={1.5} />
                 </a>
@@ -287,12 +287,12 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                 onCancel={() => setEditingEventId(null)}
               />
             ) : (
-              <div key={event.id} className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-lg">
+              <div key={event.id} className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg">
                 <Clock size={16} className="text-sky-400 flex-shrink-0" strokeWidth={1.5} />
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{event.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-sm font-medium text-orbital-text truncate">{event.title}</p>
+                  <p className="text-xs text-orbital-text-faint mt-0.5">
                     {event.all_day
                       ? 'All day'
                       : new Date(event.start_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
@@ -305,7 +305,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Add to Google Calendar"
-                  className="text-slate-500 hover:text-sky-400 p-1"
+                  className="text-orbital-text-faint hover:text-sky-400 p-1"
                 >
                   <CalendarPlus size={16} strokeWidth={1.5} />
                 </a>
@@ -313,7 +313,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                 <button
                   onClick={() => setEditingEventId(event.id)}
                   aria-label="Edit event"
-                  className="text-slate-500 hover:text-indigo-400 p-1"
+                  className="text-orbital-text-faint hover:text-orbital-accent-2 p-1"
                 >
                   <Pencil size={16} strokeWidth={1.5} />
                 </button>
@@ -323,7 +323,7 @@ export default function CalendarView({ userId }: CalendarViewProps) {
                     if (window.confirm(`Delete "${event.title}"? This can't be undone.`)) removeEvent(event.id);
                   }}
                   aria-label="Delete event"
-                  className="text-slate-500 hover:text-rose-400 p-1"
+                  className="text-orbital-text-faint hover:text-rose-400 p-1"
                 >
                   <Trash2 size={16} strokeWidth={1.5} />
                 </button>

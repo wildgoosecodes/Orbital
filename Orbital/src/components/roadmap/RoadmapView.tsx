@@ -44,41 +44,41 @@ export default function RoadmapView({ userId }: RoadmapViewProps) {
     <div className="space-y-4">
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col sm:flex-row gap-2 p-4 bg-slate-950 border border-slate-800 rounded-xl"
+        className="flex flex-col sm:flex-row gap-2 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl"
       >
         <input
           type="text"
           placeholder="Add a year goal..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
         />
         <input
           type="number"
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
-          className="sm:w-24 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+          className="sm:w-24 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
         />
         <button
           type="submit"
           disabled={submitting || !title.trim()}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
+          className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
         >
           Add year goal
         </button>
       </form>
 
       {error && <p className="text-sm text-rose-400">{error}</p>}
-      {loading && <p className="text-sm text-slate-500">Loading roadmap...</p>}
+      {loading && <p className="text-sm text-orbital-text-faint">Loading roadmap...</p>}
 
       {!loading && yearGoals.length === 0 && (
-        <div className="p-8 bg-slate-950 border border-slate-800 rounded-xl text-center space-y-3">
-          <p className="text-sm text-slate-500">
+        <div className="p-8 bg-cosmic-surface-2 border border-cosmic-border rounded-xl text-center space-y-3">
+          <p className="text-sm text-orbital-text-faint">
             No roadmap yet — add a year goal above, or let Orbital build one with you.
           </p>
           <Link
             to="/onboarding"
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors"
+            className="inline-flex items-center gap-2 bg-orbital-accent-1 hover:bg-orbital-accent-1/90 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors"
           >
             <Sparkles size={14} />
             Start with Orbital

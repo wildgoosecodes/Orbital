@@ -17,14 +17,14 @@ interface MilestoneNodeProps {
 }
 
 const STATUS_STYLES: Record<Milestone['status'], string> = {
-  pending: 'bg-slate-800 text-slate-400 border-slate-700',
-  active: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+  pending: 'bg-cosmic-surface-3 text-orbital-text-muted border-cosmic-border',
+  active: 'bg-orbital-accent-1/10 text-orbital-accent-2 border-orbital-accent-1/30',
   completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
 };
 
 const STATUS_DOT: Record<Milestone['status'], string> = {
-  pending: 'bg-slate-600',
-  active: 'bg-indigo-500',
+  pending: 'bg-orbital-text-faint',
+  active: 'bg-orbital-accent-1',
   completed: 'bg-emerald-500',
 };
 
@@ -72,17 +72,17 @@ export default function MilestoneNode({
         <button
           onClick={() => onUpdateStatus(milestone.id, NEXT_STATUS[milestone.status])}
           aria-label={`Cycle status (currently ${milestone.status})`}
-          className={`w-3 h-3 rounded-full ${STATUS_DOT[milestone.status]} ring-4 ring-slate-950 flex-shrink-0`}
+          className={`w-3 h-3 rounded-full ${STATUS_DOT[milestone.status]} ring-4 ring-cosmic-bg flex-shrink-0`}
         />
-        {!isLast && <div className="w-px flex-1 bg-slate-800 mt-1" />}
+        {!isLast && <div className="w-px flex-1 bg-cosmic-border mt-1" />}
       </div>
 
       <div className="flex-1 min-w-0 pb-4">
-        <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-lg">
+        <div className="p-3 bg-cosmic-surface-2/60 border border-cosmic-border rounded-lg">
           <div className="flex items-center justify-between gap-2">
             <button onClick={() => setExpanded((v) => !v)} className="flex-1 flex items-center gap-2 text-left min-w-0">
-              <ChevronDown size={14} className={`text-slate-500 flex-shrink-0 transition-transform ${expanded ? 'rotate-0' : '-rotate-90'}`} />
-              <span className="text-sm font-medium text-white truncate">{milestone.title}</span>
+              <ChevronDown size={14} className={`text-orbital-text-faint flex-shrink-0 transition-transform ${expanded ? 'rotate-0' : '-rotate-90'}`} />
+              <span className="text-sm font-medium text-orbital-text truncate">{milestone.title}</span>
             </button>
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[milestone.status]}`}>
               {milestone.status}
@@ -94,7 +94,7 @@ export default function MilestoneNode({
                 }
               }}
               aria-label="Delete milestone"
-              className="text-slate-500 hover:text-rose-400 p-1 flex-shrink-0"
+              className="text-orbital-text-faint hover:text-rose-400 p-1 flex-shrink-0"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -103,15 +103,15 @@ export default function MilestoneNode({
           </div>
 
           {milestone.goals.length > 0 && (
-            <div className="mt-2 h-1 rounded-full bg-slate-800 overflow-hidden">
-              <div className="h-full rounded-full bg-indigo-500 transition-all duration-500" style={{ width: `${progress}%` }} />
+            <div className="mt-2 h-1 rounded-full bg-cosmic-surface-3 overflow-hidden">
+              <div className="h-full rounded-full bg-orbital-accent-1 transition-all duration-500" style={{ width: `${progress}%` }} />
             </div>
           )}
 
           {expanded && (
             <div className="mt-3 space-y-2">
               {milestone.goals.length === 0 && (
-                <p className="text-xs text-slate-500">No goals yet — add one below.</p>
+                <p className="text-xs text-orbital-text-faint">No goals yet — add one below.</p>
               )}
               {milestone.goals.map((goal) => (
                 <GoalRow key={goal.id} goal={goal} onUpdateProgress={onUpdateGoalProgress} onDelete={onRemoveGoal} />
@@ -123,12 +123,12 @@ export default function MilestoneNode({
                   placeholder="Add a goal..."
                   value={goalTitle}
                   onChange={(e) => setGoalTitle(e.target.value)}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
                 />
                 <select
                   value={periodType}
                   onChange={(e) => setPeriodType(e.target.value as GoalPeriodType)}
-                  className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
                 >
                   <option value="weekly">Weekly</option>
                   <option value="quarterly">Quarterly</option>
@@ -137,7 +137,7 @@ export default function MilestoneNode({
                 <button
                   type="submit"
                   disabled={submitting || !goalTitle.trim()}
-                  className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium text-xs rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
+                  className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-xs rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
                 >
                   Add goal
                 </button>
@@ -184,7 +184,7 @@ function GoalRow({
     <motion.div
       animate={justCompleted ? { scale: [1, 1.04, 1] } : { scale: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`p-2.5 bg-slate-950 border rounded-lg ${justCompleted ? 'border-emerald-500/60' : 'border-slate-800'}`}
+      className={`p-2.5 bg-cosmic-bg border rounded-lg ${justCompleted ? 'border-emerald-500/60' : 'border-cosmic-border'}`}
     >
       <div className="flex items-center justify-between text-xs">
         <button
@@ -194,19 +194,19 @@ function GoalRow({
           {hasLinkedItems && (
             <ChevronDown
               size={11}
-              className={`text-slate-500 flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
+              className={`text-orbital-text-faint flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
             />
           )}
-          <span className="text-slate-300 truncate">{goal.title}</span>
+          <span className="text-orbital-text-muted truncate">{goal.title}</span>
         </button>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-indigo-400 font-semibold">{value}%</span>
+          <span className="text-orbital-accent-2 font-semibold">{value}%</span>
           <button
             onClick={() => {
               if (window.confirm(`Delete "${goal.title}"? This can't be undone.`)) onDelete(goal.id);
             }}
             aria-label="Delete goal"
-            className="text-slate-500 hover:text-rose-400"
+            className="text-orbital-text-faint hover:text-rose-400"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -216,8 +216,8 @@ function GoalRow({
       </div>
 
       {hasLinkedItems ? (
-        <div className="mt-1.5 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-          <div className="h-full rounded-full bg-indigo-500 transition-all duration-500" style={{ width: `${value}%` }} />
+        <div className="mt-1.5 h-1.5 rounded-full bg-cosmic-surface-3 overflow-hidden">
+          <div className="h-full rounded-full bg-orbital-accent-1 transition-all duration-500" style={{ width: `${value}%` }} />
         </div>
       ) : (
         <input
@@ -230,7 +230,7 @@ function GoalRow({
           onMouseUp={commit}
           onTouchEnd={commit}
           onKeyUp={commit}
-          className="mt-1.5 w-full accent-indigo-500"
+          className="mt-1.5 w-full accent-orbital-accent-1"
         />
       )}
 
@@ -240,19 +240,19 @@ function GoalRow({
             <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
               <span
                 className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                  task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'
+                  task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
                 }`}
               />
-              <span className={`truncate ${task.status === 'done' ? 'text-slate-500 line-through' : 'text-slate-400'}`}>
+              <span className={`truncate ${task.status === 'done' ? 'text-orbital-text-faint line-through' : 'text-orbital-text-muted'}`}>
                 {task.title}
               </span>
             </div>
           ))}
           {goal.habits.map((habit) => (
             <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500/20 border border-indigo-500/50 flex-shrink-0" />
-              <span className="truncate text-slate-400">{habit.name}</span>
-              <span className="flex-shrink-0 text-indigo-400/70">{calculateStreak(habit.completedDates)}d streak</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-orbital-accent-1/20 border border-orbital-accent-1/50 flex-shrink-0" />
+              <span className="truncate text-orbital-text-muted">{habit.name}</span>
+              <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates)}d streak</span>
             </div>
           ))}
         </div>

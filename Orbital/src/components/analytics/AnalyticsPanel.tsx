@@ -9,7 +9,7 @@ interface AnalyticsPanelProps {
 export default function AnalyticsPanel({ userId }: AnalyticsPanelProps) {
   const { last7Days, statusBreakdown, loading, error } = useAnalytics(userId);
 
-  if (loading) return <p className="text-sm text-slate-500">Loading analytics...</p>;
+  if (loading) return <p className="text-sm text-orbital-text-faint">Loading analytics...</p>;
   if (error) return <p className="text-sm text-rose-400">{error}</p>;
 
   return (

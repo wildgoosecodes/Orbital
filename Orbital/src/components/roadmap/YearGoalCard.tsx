@@ -51,15 +51,15 @@ export default function YearGoalCard({
   }
 
   return (
-    <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl">
+    <div className="p-5 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
             <Trophy size={18} strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">{yearGoal.title}</h3>
-            <p className="text-xs text-slate-500">{yearGoal.year} · {progress}% of the way there</p>
+            <h3 className="text-lg font-semibold text-orbital-text">{yearGoal.title}</h3>
+            <p className="text-xs text-orbital-text-faint">{yearGoal.year} · {progress}% of the way there</p>
           </div>
         </div>
         <button
@@ -69,7 +69,7 @@ export default function YearGoalCard({
             }
           }}
           aria-label="Delete year goal"
-          className="text-slate-500 hover:text-rose-400 p-1"
+          className="text-orbital-text-faint hover:text-rose-400 p-1"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -77,13 +77,13 @@ export default function YearGoalCard({
         </button>
       </div>
 
-      <div className="mt-3 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+      <div className="mt-3 h-1.5 rounded-full bg-cosmic-surface-3 overflow-hidden">
         <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }} />
       </div>
 
       <div className="mt-6 space-y-3">
         {yearGoal.milestones.length === 0 && (
-          <p className="text-sm text-slate-500">No milestones yet — add one below to start the path.</p>
+          <p className="text-sm text-orbital-text-faint">No milestones yet — add one below to start the path.</p>
         )}
         {yearGoal.milestones.map((milestone, i) => (
           <motion.div
@@ -111,12 +111,12 @@ export default function YearGoalCard({
           placeholder="Add a milestone..."
           value={milestoneTitle}
           onChange={(e) => setMilestoneTitle(e.target.value)}
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
         />
         <button
           type="submit"
           disabled={submitting || !milestoneTitle.trim()}
-          className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
+          className="bg-cosmic-surface-3 hover:bg-cosmic-border disabled:opacity-50 text-orbital-text font-medium text-sm rounded-lg px-4 py-2 transition-colors whitespace-nowrap"
         >
           Add milestone
         </button>
