@@ -34,6 +34,7 @@ export interface Habit {
   target_per_period: number;
   /** Weekdays this habit is scheduled for — 0 = Sunday ... 6 = Saturday, matching Date.getDay(). */
   days_of_week: number[];
+  category: string | null;
   created_at: string;
 }
 
@@ -90,6 +91,20 @@ export interface Event {
   reminder_minutes_before: number | null;
   reminder_sent_at: string | null;
   google_event_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimeBlock {
+  id: string;
+  user_id: string;
+  title: string;
+  category: string | null;
+  start_at: string;
+  end_at: string;
+  is_completed: boolean;
+  task_id: string | null;
+  habit_id: string | null;
   created_at: string;
   updated_at: string;
 }

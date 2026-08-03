@@ -13,6 +13,7 @@ export interface NewHabitInput {
   /** Weekdays this habit runs — 0 = Sunday ... 6 = Saturday. */
   days_of_week: number[];
   goal_id?: string | null;
+  category?: string;
 }
 
 export interface HabitLogRow {
@@ -69,6 +70,7 @@ export function useHabits(userId: string) {
         target_per_period: 1,
         days_of_week: input.days_of_week,
         goal_id: input.goal_id ?? null,
+        category: input.category || null,
       });
       if (error) throw error;
     },

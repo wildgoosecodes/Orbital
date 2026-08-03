@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useHabits } from '../../hooks/useHabits';
 import { useGoals } from '../../hooks/useGoals';
@@ -13,9 +14,14 @@ export default function HabitList({ userId }: HabitListProps) {
   const { goals } = useGoals(userId);
   const goalTitleById = new Map(goals.map((g) => [g.id, g.title]));
 
+  const categories = useMemo(
+    () => [...new Set(habits.map((h) => h.category).filter((c): c is string => !!c))].sort(),
+    [habits],
+  );
+
   return (
     <div className="space-y-4">
-      <HabitForm onSubmit={addHabit} />
+      <HabitForm onSubmit={addHabit} categories={categories} />
 
       {error && <p className="text-sm text-rose-400">{error}</p>}
       {loading && <p className="text-sm text-orbital-text-faint">Loading habits...</p>}

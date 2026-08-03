@@ -3,6 +3,7 @@ import { Milestone } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
 import { calculateStreak, formatSchedule, todayStr } from '../../lib/habitStreak';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
+import { categoryColor } from '../../lib/categoryColor';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -79,6 +80,15 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
           </p>
         )}
       </div>
+
+      {habit.category && (
+        <span
+          className="text-xs font-medium px-2 py-1 rounded whitespace-nowrap"
+          style={{ backgroundColor: `${categoryColor(habit.category)}1a`, color: categoryColor(habit.category) }}
+        >
+          {habit.category}
+        </span>
+      )}
 
       <span className="text-xs font-semibold px-2 py-1 rounded bg-orbital-accent-1/10 text-orbital-accent-2 border border-orbital-accent-1/20 whitespace-nowrap">
         {streak} day{streak === 1 ? '' : 's'}

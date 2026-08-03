@@ -7,7 +7,10 @@ import { useHabits } from '../../hooks/useHabits';
 import { useGoogleCalendarImport } from '../../hooks/useGoogleCalendarImport';
 import { buildMonthGrid, dateKey } from '../../lib/calendarGrid';
 import EventForm from './EventForm';
+import DayTimelineView from './DayTimelineView';
 import type { Task, Event } from '../../types/database';
+
+type ViewMode = 'month' | 'day';
 
 interface CalendarViewProps {
   userId: string;
@@ -47,6 +50,12 @@ export default function CalendarView({ userId }: CalendarViewProps) {
   const [selectedKey, setSelectedKey] = useState(() => dateKey(parseInitialDate(searchParams.get('date'))));
   const [addingEvent, setAddingEvent] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+
+  function selectDayFromTimeline(key: string) {
+    setSelectedKey(key);
+    setViewDate(new Date(`${key}T00:00:00`));
+  }
 
   const todayKey = dateKey(today);
   const gridDays = useMemo(() => buildMonthGrid(viewDate), [viewDate]);
@@ -107,6 +116,29 @@ export default function CalendarView({ userId }: CalendarViewProps) {
 
   return (
     <div className="space-y-4">
+      <div className="inline-flex items-center gap-1 p-1 bg-cosmic-surface-2 border border-cosmic-border rounded-lg">
+        <button
+          onClick={() => setViewMode('month')}
+          className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+            viewMode === 'month' ? 'bg-orbital-accent-1 text-orbital-text' : 'text-orbital-text-muted hover:text-orbital-text'
+          }`}
+        >
+          Month
+        </button>
+        <button
+          onClick={() => setViewMode('day')}
+          className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+            viewMode === 'day' ? 'bg-orbital-accent-1 text-orbital-text' : 'text-orbital-text-muted hover:text-orbital-text'
+          }`}
+        >
+          Day
+        </button>
+      </div>
+
+      {viewMode === 'day' ? (
+        <DayTimelineView userId={userId} selectedKey={selectedKey} onSelectDay={selectDayFromTimeline} />
+      ) : (
+        <>
       <div className="p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-orbital-text">{MONTH_FORMAT.format(viewDate)}</h3>
@@ -334,6 +366,8 @@ export default function CalendarView({ userId }: CalendarViewProps) {
           })}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -4,16 +4,19 @@ import { motion } from 'framer-motion';
 import type { NewHabitInput } from '../../hooks/useHabits';
 import { EVERY_DAY } from '../../lib/habitStreak';
 import { tapScale } from '../../lib/motion';
+import { categoryColor } from '../../lib/categoryColor';
 
 interface HabitFormProps {
   onSubmit: (input: NewHabitInput) => Promise<void>;
+  categories: string[];
 }
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export default function HabitForm({ onSubmit }: HabitFormProps) {
+export default function HabitForm({ onSubmit, categories }: HabitFormProps) {
   const [name, setName] = useState('');
   const [days, setDays] = useState<number[]>(EVERY_DAY);
+  const [category, setCategory] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   function toggleDay(day: number) {
@@ -25,9 +28,10 @@ export default function HabitForm({ onSubmit }: HabitFormProps) {
     if (!name.trim() || days.length === 0) return;
     setSubmitting(true);
     try {
-      await onSubmit({ name: name.trim(), days_of_week: days });
+      await onSubmit({ name: name.trim(), days_of_week: days, category: category.trim() || undefined });
       setName('');
       setDays(EVERY_DAY);
+      setCategory('');
     } finally {
       setSubmitting(false);
     }
@@ -86,6 +90,28 @@ export default function HabitForm({ onSubmit }: HabitFormProps) {
           Every day
         </motion.button>
       </div>
+
+      <div className="relative">
+        {category.trim() && (
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
+            style={{ backgroundColor: categoryColor(category) }}
+          />
+        )}
+        <input
+          type="text"
+          list="habit-form-category-options"
+          placeholder="Category (e.g. Health, Work) — optional, helps organize the timeline"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className={`w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 ${category.trim() ? 'pl-7 pr-3' : 'px-3'}`}
+        />
+      </div>
+      <datalist id="habit-form-category-options">
+        {categories.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
     </form>
   );
 }
