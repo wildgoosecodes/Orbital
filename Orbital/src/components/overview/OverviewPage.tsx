@@ -143,7 +143,7 @@ export default function OverviewPage({ userId, userEmail, profile, onNavigate, o
             onNavigate={onNavigate}
             goalTitleById={goalTitleById}
           />
-          <MiniCalendarCard tasks={tasks} events={events} habits={habits} onNavigate={onNavigate} />
+          <MiniCalendarCard userId={userId} tasks={tasks} events={events} habits={habits} onNavigate={onNavigate} />
         </div>
         <div className="space-y-4">
           <GoalsProgressCard goals={goals} loading={goalsLoading} onNavigate={onNavigate} />

@@ -30,7 +30,7 @@ type FormState =
   | null;
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const ROW_HEIGHT = 56;
+const MINUTES_PER_DAY = 24 * 60;
 const UNCATEGORIZED = 'Uncategorized';
 
 function formatHour(h: number): string {
@@ -92,10 +92,13 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
   }, [unscheduled]);
 
   // Auto-scroll to ~1 hour before the current time so today's schedule is in view on load.
+  // Computed as a fraction of the actual rendered content height (not a fixed px-per-hour
+  // constant) so it lands in the right place whatever height the container ends up at.
   useEffect(() => {
     if (!timelineRef.current) return;
     const nowHour = new Date().getHours();
-    timelineRef.current.scrollTop = Math.max(0, (nowHour - 1) * ROW_HEIGHT);
+    const fraction = Math.max(0, nowHour - 1) / 24;
+    timelineRef.current.scrollTop = fraction * timelineRef.current.scrollHeight;
   }, []);
 
   function shiftDay(delta: number) {
@@ -123,38 +126,38 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
   );
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4">
-      <div className="flex-1 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl min-w-0">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-orbital-text">
-            {selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+    <div className="flex flex-col lg:flex-row gap-3">
+      <div className="flex-1 p-3 sm:p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 className="text-sm font-semibold text-orbital-text whitespace-nowrap">
+            {selectedDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
           </h3>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             <button
               onClick={() => setFormState({ mode: 'blank' })}
-              className="flex items-center gap-1 text-xs font-semibold text-orbital-accent-2 hover:text-orbital-accent-2/80 border border-cosmic-border rounded-lg px-2.5 py-1 mr-1"
+              className="flex items-center gap-1 text-xs font-semibold text-orbital-accent-2 hover:text-orbital-accent-2/80 border border-cosmic-border rounded-lg px-2 py-1"
             >
-              <Plus size={12} /> Add block
+              <Plus size={12} /> Add
             </button>
             <button
               onClick={() => onSelectDay(dateKey(new Date()))}
-              className="text-xs font-semibold text-orbital-text-muted hover:text-orbital-text border border-cosmic-border rounded-lg px-2.5 py-1 mr-1"
+              className="text-xs font-semibold text-orbital-text-muted hover:text-orbital-text border border-cosmic-border rounded-lg px-2 py-1"
             >
               Today
             </button>
             <button
               onClick={() => shiftDay(-1)}
               aria-label="Previous day"
-              className="text-orbital-text-muted hover:text-orbital-text p-1.5 rounded-lg hover:bg-cosmic-surface-3"
+              className="text-orbital-text-muted hover:text-orbital-text p-1 rounded-lg hover:bg-cosmic-surface-3"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
             <button
               onClick={() => shiftDay(1)}
               aria-label="Next day"
-              className="text-orbital-text-muted hover:text-orbital-text p-1.5 rounded-lg hover:bg-cosmic-surface-3"
+              className="text-orbital-text-muted hover:text-orbital-text p-1 rounded-lg hover:bg-cosmic-surface-3"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -185,24 +188,29 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
 
         {loading && <p className="text-sm text-orbital-text-faint">Loading...</p>}
 
-        <div ref={timelineRef} className="relative overflow-y-auto" style={{ maxHeight: 560 }}>
-          <div className="relative" style={{ height: HOURS.length * ROW_HEIGHT }}>
+        <div ref={timelineRef} className="relative overflow-y-auto max-h-[45vh] sm:max-h-[55vh]">
+          {/* Every position below is a % of this div's own height, not a fixed px-per-hour
+              constant — the div's actual height comes from CSS (h-[...] below) and everything
+              inside scales to whatever that ends up being. */}
+          <div className="relative h-[1200px] sm:h-[1440px]">
             {HOURS.map((h) => (
               <div
                 key={h}
                 className="absolute left-0 right-0 border-t border-cosmic-border/50"
-                style={{ top: h * ROW_HEIGHT, height: ROW_HEIGHT }}
+                style={{ top: `${(h / 24) * 100}%`, height: `${100 / 24}%` }}
               >
-                <span className="absolute -top-2 left-0 text-[10px] text-orbital-text-faint w-12">{formatHour(h)}</span>
+                <span className="absolute -top-2 left-0 text-[9px] text-orbital-text-faint w-9">{formatHour(h)}</span>
               </div>
             ))}
 
-            <div className="absolute left-14 right-1 top-0 bottom-0">
+            <div className="absolute left-10 right-1 top-0 bottom-0">
               {dayBlocks.map((block) => {
                 const start = new Date(block.start_at);
                 const end = new Date(block.end_at);
-                const top = (minutesSinceMidnight(start) / 60) * ROW_HEIGHT;
-                const height = Math.max(((end.getTime() - start.getTime()) / 60_000 / 60) * ROW_HEIGHT, 22);
+                const startMin = minutesSinceMidnight(start);
+                const durationMin = (end.getTime() - start.getTime()) / 60_000;
+                const top = (startMin / MINUTES_PER_DAY) * 100;
+                const height = (durationMin / MINUTES_PER_DAY) * 100;
                 const color = categoryColor(block.category || 'Uncategorized');
                 const overlaps = overlappingIds.has(block.id);
                 const { col, cols } = blockColumns.get(block.id) ?? { col: 0, cols: 1 };
@@ -212,14 +220,15 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
                   <div
                     key={block.id}
                     style={{
-                      top,
-                      height,
+                      top: `${top}%`,
+                      height: `${height}%`,
+                      minHeight: 20,
                       left: `${col * widthPct}%`,
                       width: `calc(${widthPct}% - 4px)`,
                       backgroundColor: `${color}22`,
                       borderLeft: `3px solid ${color}`,
                     }}
-                    className={`absolute rounded-md px-2 py-1 overflow-hidden cursor-pointer group ${
+                    className={`absolute rounded-md px-1.5 py-0.5 overflow-hidden cursor-pointer group ${
                       overlaps ? 'ring-2 ring-amber-400 z-10' : ''
                     }`}
                     onClick={() => setFormState({ mode: 'edit', block })}
@@ -264,7 +273,7 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
                         <Trash2 size={11} />
                       </button>
                     </div>
-                    {height >= 36 && (
+                    {durationMin >= 40 && (
                       <p className="text-[10px] text-orbital-text-faint mt-0.5">
                         {start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} –{' '}
                         {end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
@@ -278,7 +287,7 @@ export default function DayTimelineView({ userId, selectedKey, onSelectDay }: Da
         </div>
       </div>
 
-      <div className="lg:w-72 flex-shrink-0 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl space-y-3">
+      <div className="lg:w-64 xl:w-72 flex-shrink-0 p-3 sm:p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl space-y-3">
         <h3 className="text-sm font-semibold text-orbital-text">Unscheduled today</h3>
         {groupedByCategory.length === 0 && (
           <p className="text-sm text-orbital-text-faint">Nothing left to schedule for this day.</p>
