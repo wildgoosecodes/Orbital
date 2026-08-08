@@ -1,8 +1,29 @@
 import type { TimeBlock } from '../types/database';
 
+export const MINUTES_PER_DAY = 24 * 60;
+
 /** Minutes elapsed since local midnight — used to position a block vertically on the timeline. */
 export function minutesSinceMidnight(d: Date): number {
   return d.getHours() * 60 + d.getMinutes();
+}
+
+/** Fraction (0..1) of the timeline's own height → minutes since midnight — used to translate a
+ *  drag/drop pointer position into a time, independent of however tall the timeline actually
+ *  renders (it's a fraction of the container, not a fixed px-per-minute constant). */
+export function fractionToMinutes(fraction: number): number {
+  return Math.round(fraction * MINUTES_PER_DAY);
+}
+
+/** Rounds to the nearest `step`-minute increment, clamped to a valid day. Default 30min matches
+ *  the drag-and-drop snap grid. */
+export function snapMinutes(minutes: number, step = 30): number {
+  return Math.min(MINUTES_PER_DAY, Math.max(0, Math.round(minutes / step) * step));
+}
+
+/** Shared half-open interval overlap test — true when [aStart,aEnd) and [bStart,bEnd) intersect.
+ *  Works on any consistent numeric time unit (ms epoch, minutes since midnight, etc). */
+export function rangesOverlap(aStart: number, aEnd: number, bStart: number, bEnd: number): boolean {
+  return aStart < bEnd && bStart < aEnd;
 }
 
 /** First hour-long slot (between 6am and 10pm) that doesn't collide with any existing block
@@ -34,7 +55,7 @@ export function computeOverlappingIds(blocks: TimeBlock[]): Set<string> {
       const b = blocks[j];
       const bStart = new Date(b.start_at).getTime();
       const bEnd = new Date(b.end_at).getTime();
-      if (aStart < bEnd && bStart < aEnd) {
+      if (rangesOverlap(aStart, aEnd, bStart, bEnd)) {
         overlapping.add(a.id);
         overlapping.add(b.id);
       }
@@ -85,4 +106,31 @@ export function layoutDayBlocks(blocks: TimeBlock[]): Map<string, BlockColumn> {
   flushCluster();
 
   return result;
+}
+
+export interface MinuteRange {
+  id: string;
+  startMin: number;
+  endMin: number;
+}
+
+/** "Push later blocks down" conflict resolution: given every *other* block that day, sorted by
+ *  start time ascending, shifts any block that starts before `pushFromMin` to start exactly
+ *  there — preserving its own duration — then advances the push point to that block's new end.
+ *  Stops at the first block that already starts at/after the current push point: since the
+ *  input is sorted ascending and the push point only ever grows, every later block already
+ *  clears it too, so nothing past that point needs to move. Returns only the blocks that
+ *  actually shifted. */
+export function cascadePush(sortedOtherBlocks: MinuteRange[], pushFromMin: number): MinuteRange[] {
+  const shifted: MinuteRange[] = [];
+  let cursor = pushFromMin;
+  for (const block of sortedOtherBlocks) {
+    if (block.startMin >= cursor) break;
+    const duration = block.endMin - block.startMin;
+    const newStart = cursor;
+    const newEnd = newStart + duration;
+    shifted.push({ id: block.id, startMin: newStart, endMin: newEnd });
+    cursor = newEnd;
+  }
+  return shifted;
 }

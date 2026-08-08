@@ -112,6 +112,25 @@ export function useHabits(userId: string) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: logsKey }),
   });
 
+  const setTimeBlock = useMutation({
+    mutationFn: async ({ id, timeBlockId }: { id: string; timeBlockId: string | null }) => {
+      const { error } = await supabase.from('habits').update({ time_block_id: timeBlockId }).eq('id', id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, timeBlockId }) => {
+      await queryClient.cancelQueries({ queryKey: habitsKey });
+      const previous = queryClient.getQueryData<Habit[]>(habitsKey);
+      queryClient.setQueryData<Habit[]>(habitsKey, (old) =>
+        old?.map((h) => (h.id === id ? { ...h, time_block_id: timeBlockId } : h)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(habitsKey, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: habitsKey }),
+  });
+
   const removeHabit = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('habits').delete().eq('id', id);
@@ -126,6 +145,7 @@ export function useHabits(userId: string) {
     error: (habitsQuery.error || logsQuery.error) ? ((habitsQuery.error || logsQuery.error) as Error).message : null,
     addHabit: (input: NewHabitInput) => addHabit.mutateAsync(input),
     toggleToday: (habit: HabitWithLogs) => toggleToday.mutateAsync(habit),
+    setTimeBlock: (id: string, timeBlockId: string | null) => setTimeBlock.mutateAsync({ id, timeBlockId }),
     removeHabit: (id: string) => removeHabit.mutateAsync(id),
   };
 }

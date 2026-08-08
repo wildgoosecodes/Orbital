@@ -11,6 +11,7 @@ export interface Task {
   priority: TaskPriority;
   due_date: string | null;
   category: string | null;
+  time_block_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -35,6 +36,7 @@ export interface Habit {
   /** Weekdays this habit is scheduled for — 0 = Sunday ... 6 = Saturday, matching Date.getDay(). */
   days_of_week: number[];
   category: string | null;
+  time_block_id: string | null;
   created_at: string;
 }
 
@@ -103,8 +105,6 @@ export interface TimeBlock {
   start_at: string;
   end_at: string;
   is_completed: boolean;
-  task_id: string | null;
-  habit_id: string | null;
   created_at: string;
   updated_at: string;
 }

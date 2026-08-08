@@ -11,14 +11,9 @@ interface TimeBlockFormProps {
   defaultDate: string;
   /** Present when editing an existing block. */
   initialBlock?: TimeBlock;
-  /** Used when creating a block from the drawer's "Add to timeline" action. */
   prefillTitle?: string;
   prefillCategory?: string | null;
-  prefillTaskId?: string | null;
-  prefillHabitId?: string | null;
   prefillStartTime?: string;
-  /** Shown as a read-only badge when the block is linked to a task/habit. */
-  linkedLabel?: string;
   categories: string[];
   onSubmit: (input: NewTimeBlockInput) => Promise<void>;
   onCancel?: () => void;
@@ -46,18 +41,11 @@ export default function TimeBlockForm({
   initialBlock,
   prefillTitle,
   prefillCategory,
-  prefillTaskId,
-  prefillHabitId,
   prefillStartTime,
-  linkedLabel,
   categories,
   onSubmit,
   onCancel,
 }: TimeBlockFormProps) {
-  const taskId = initialBlock?.task_id ?? prefillTaskId ?? null;
-  const habitId = initialBlock?.habit_id ?? prefillHabitId ?? null;
-  const isLinked = !!(taskId || habitId);
-
   const [title, setTitle] = useState(initialBlock?.title ?? prefillTitle ?? '');
   const [category, setCategory] = useState(initialBlock?.category ?? prefillCategory ?? '');
   const [startTime, setStartTime] = useState(
@@ -87,8 +75,6 @@ export default function TimeBlockForm({
         category: category.trim() || undefined,
         start_at,
         end_at,
-        task_id: taskId,
-        habit_id: habitId,
       });
     } finally {
       setSubmitting(false);
@@ -100,51 +86,36 @@ export default function TimeBlockForm({
       onSubmit={handleSubmit}
       className="p-4 bg-cosmic-surface-2 border border-orbital-accent-1/50 rounded-xl space-y-3"
     >
-      {linkedLabel && (
-        <p className="text-xs font-medium text-orbital-accent-2 bg-orbital-accent-1/10 border border-orbital-accent-1/20 rounded-lg px-3 py-1.5">
-          {linkedLabel}
-        </p>
-      )}
-
       <input
         type="text"
         required
-        placeholder="Block title"
+        placeholder="Block title (e.g. School)"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
       />
 
-      {isLinked ? (
-        category.trim() && (
-          <div className="flex items-center gap-2 text-xs text-orbital-text-muted px-1">
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: categoryColor(category) }} />
-            {category}
-          </div>
-        )
-      ) : (
-        <div className="relative">
-          {category.trim() && (
-            <span
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
-              style={{ backgroundColor: categoryColor(category) }}
-            />
-          )}
-          <input
-            type="text"
-            list="time-block-category-options"
-            placeholder="Category (e.g. Work, Health) — optional"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={`w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 ${category.trim() ? 'pl-7 pr-3' : 'px-3'}`}
+      <div className="relative">
+        {category.trim() && (
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
+            style={{ backgroundColor: categoryColor(category) }}
           />
-          <datalist id="time-block-category-options">
-            {categories.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-      )}
+        )}
+        <input
+          type="text"
+          list="time-block-category-options"
+          placeholder="Category (e.g. Work, Health) — optional"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className={`w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1 ${category.trim() ? 'pl-7 pr-3' : 'px-3'}`}
+        />
+        <datalist id="time-block-category-options">
+          {categories.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+      </div>
 
       <div className="flex items-center gap-2">
         <input

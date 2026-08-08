@@ -69,6 +69,28 @@ export function useTasks(userId: string) {
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 
+  const setTimeBlock = useMutation({
+    mutationFn: async ({ id, timeBlockId }: { id: string; timeBlockId: string | null }) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ time_block_id: timeBlockId, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, timeBlockId }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Task[]>(queryKey);
+      queryClient.setQueryData<Task[]>(queryKey, (old) =>
+        old?.map((t) => (t.id === id ? { ...t, time_block_id: timeBlockId, updated_at: new Date().toISOString() } : t)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
   const updateTask = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: NewTaskInput }) => {
       const { error } = await supabase
@@ -102,6 +124,7 @@ export function useTasks(userId: string) {
     error: error ? (error as Error).message : null,
     addTask: (input: NewTaskInput) => addTask.mutateAsync(input),
     setStatus: (id: string, status: TaskStatus) => setStatus.mutateAsync({ id, status }),
+    setTimeBlock: (id: string, timeBlockId: string | null) => setTimeBlock.mutateAsync({ id, timeBlockId }),
     updateTask: (id: string, updates: NewTaskInput) => updateTask.mutateAsync({ id, updates }),
     removeTask: (id: string) => removeTask.mutateAsync(id),
   };
