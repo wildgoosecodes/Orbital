@@ -21,6 +21,7 @@ export interface Profile {
   display_name: string | null;
   city: string | null;
   onboarding_completed_at: string | null;
+  block_reminders_enabled: boolean;
   created_at: string;
 }
 
@@ -105,6 +106,9 @@ export interface TimeBlock {
   start_at: string;
   end_at: string;
   is_completed: boolean;
+  transition_warning_sent_at: string | null;
+  start_checkin_sent_at: string | null;
+  end_review_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }

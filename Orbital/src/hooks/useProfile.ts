@@ -31,7 +31,7 @@ export function useProfile(userId: string) {
     await refresh();
   }
 
-  async function updateProfile(updates: { display_name?: string; city?: string | null }) {
+  async function updateProfile(updates: { display_name?: string; city?: string | null; block_reminders_enabled?: boolean }) {
     if (!userId) return;
     const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
     if (error) throw error;

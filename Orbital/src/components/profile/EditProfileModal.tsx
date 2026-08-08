@@ -10,12 +10,13 @@ interface EditProfileModalProps {
   onClose: () => void;
   profile: Profile | null;
   userEmail: string;
-  onSave: (updates: { display_name: string; city: string | null }) => Promise<void>;
+  onSave: (updates: { display_name: string; city: string | null; block_reminders_enabled: boolean }) => Promise<void>;
 }
 
 export default function EditProfileModal({ open, onClose, profile, userEmail, onSave }: EditProfileModalProps) {
   const [displayName, setDisplayName] = useState('');
   const [city, setCity] = useState('');
+  const [blockRemindersEnabled, setBlockRemindersEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +25,7 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
       const currentName = profile?.display_name && profile.display_name !== userEmail ? profile.display_name : '';
       setDisplayName(currentName);
       setCity(profile?.city ?? '');
+      setBlockRemindersEnabled(profile?.block_reminders_enabled ?? false);
       setError(null);
     }
   }, [open, profile, userEmail]);
@@ -36,7 +38,7 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
     setSaving(true);
     setError(null);
     try {
-      await onSave({ display_name: displayName.trim(), city: city.trim() || null });
+      await onSave({ display_name: displayName.trim(), city: city.trim() || null, block_reminders_enabled: blockRemindersEnabled });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong saving your profile.');
@@ -100,6 +102,21 @@ export default function EditProfileModal({ open, onClose, profile, userEmail, on
                   placeholder="For weather, if location access is off"
                   className="w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text placeholder:text-orbital-text-faint focus:outline-none focus:border-orbital-accent-1"
                 />
+              </div>
+
+              <div className="flex items-start gap-2.5 pt-1">
+                <input
+                  id="edit-profile-block-reminders"
+                  type="checkbox"
+                  checked={blockRemindersEnabled}
+                  onChange={(e) => setBlockRemindersEnabled(e.target.checked)}
+                  className="mt-0.5 rounded border-cosmic-border bg-cosmic-surface-3 text-orbital-accent-1 focus:ring-orbital-accent-1"
+                />
+                <label htmlFor="edit-profile-block-reminders" className="text-sm text-orbital-text-muted">
+                  <span className="text-orbital-text font-medium">Block reminders</span>
+                  <br />
+                  Push notifications when a timeblock is about to start, starts, and ends. Requires notifications to be enabled (bell icon in the nav).
+                </label>
               </div>
 
               {error && <p className="text-sm text-rose-400">{error}</p>}

@@ -15,7 +15,7 @@ interface TopNavProps {
   userId: string;
   userEmail: string;
   profile: Profile | null;
-  onUpdateProfile: (updates: { display_name: string; city: string | null }) => Promise<void>;
+  onUpdateProfile: (updates: { display_name: string; city: string | null; block_reminders_enabled: boolean }) => Promise<void>;
   onSignOut: () => void;
 }
 
