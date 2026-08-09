@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CalendarDays, Milestone } from 'lucide-react';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import type { Goal, Task, TaskPriority } from '../../types/database';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
 import { categoryColor } from '../../lib/categoryColor';
+import CheckToggle from '../shared/CheckToggle';
 
 interface TaskItemProps {
   task: Task;
@@ -175,32 +176,12 @@ export default function TaskItem({ task, onToggleDone, onUpdate, onDelete, goals
       whileHover={cardHover}
       className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl"
     >
-      <button
-        onClick={() => onToggleDone(task)}
-        aria-label={done ? 'Mark as not done' : 'Mark as done'}
-        className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-          done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-        }`}
-      >
-        <AnimatePresence>
-          {done && (
-            <motion.svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-            >
-              <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-            </motion.svg>
-          )}
-        </AnimatePresence>
-      </button>
+      <CheckToggle
+        done={done}
+        onToggle={() => onToggleDone(task)}
+        ariaLabel={done ? 'Mark as not done' : 'Mark as done'}
+        variant="task"
+      />
 
       <button onClick={startEditing} className="flex-1 min-w-0 text-left">
         <p className={`text-sm font-medium ${done ? 'text-orbital-text-faint line-through' : 'text-orbital-text'}`}>{task.title}</p>

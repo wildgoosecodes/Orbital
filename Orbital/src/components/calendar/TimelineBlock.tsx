@@ -2,6 +2,8 @@ import { Trash2 } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { Task, TimeBlock } from '../../types/database';
 import type { HabitWithLogs } from '../../hooks/useHabits';
+import { calculateStreak, todayStr } from '../../lib/habitStreak';
+import CheckToggle from '../shared/CheckToggle';
 
 export type DragKind = 'move' | 'resize-top' | 'resize-bottom';
 
@@ -117,16 +119,13 @@ export default function TimelineBlock({
         <div className="px-1.5 space-y-0.5 overflow-hidden">
           {tasks.map((t) => (
             <div key={t.id} className="flex items-center gap-1 min-w-0">
-              <button
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleTask(t);
-                }}
-                aria-label={t.status === 'done' ? 'Mark task not done' : 'Mark task done'}
-                className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                  t.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                }`}
+              <CheckToggle
+                done={t.status === 'done'}
+                onToggle={() => onToggleTask(t)}
+                ariaLabel={t.status === 'done' ? 'Mark task not done' : 'Mark task done'}
+                variant="task"
+                size="sm"
+                stopDragPropagation
               />
               <span className={`text-[10px] truncate ${t.status === 'done' ? 'line-through text-orbital-text-faint' : 'text-orbital-text-muted'}`}>
                 {t.title}
@@ -134,19 +133,20 @@ export default function TimelineBlock({
             </div>
           ))}
           {habits.map((h) => {
-            const doneToday = h.completedDates.includes(new Date().toISOString().slice(0, 10));
+            const doneToday = h.completedDates.includes(todayStr());
+            const streak = doneToday
+              ? calculateStreak(h.completedDates, h.days_of_week)
+              : calculateStreak([...h.completedDates, todayStr()], h.days_of_week);
             return (
               <div key={h.id} className="flex items-center gap-1 min-w-0">
-                <button
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleHabit(h);
-                  }}
-                  aria-label={doneToday ? 'Mark habit not done' : 'Mark habit done'}
-                  className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                    doneToday ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                  }`}
+                <CheckToggle
+                  done={doneToday}
+                  onToggle={() => onToggleHabit(h)}
+                  ariaLabel={doneToday ? 'Mark habit not done' : 'Mark habit done'}
+                  variant="habit"
+                  size="sm"
+                  streak={streak}
+                  stopDragPropagation
                 />
                 <span className={`text-[10px] truncate ${doneToday ? 'line-through text-orbital-text-faint' : 'text-orbital-text-muted'}`}>
                   {h.name}

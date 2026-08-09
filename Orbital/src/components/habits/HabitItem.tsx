@@ -1,9 +1,10 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Milestone } from 'lucide-react';
 import type { HabitWithLogs } from '../../hooks/useHabits';
 import { calculateStreak, formatSchedule, todayStr } from '../../lib/habitStreak';
 import { cardHover, listItem, listItemTransition, tapScale } from '../../lib/motion';
 import { categoryColor } from '../../lib/categoryColor';
+import CheckToggle from '../shared/CheckToggle';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -29,32 +30,13 @@ export default function HabitItem({ habit, onToggleToday, onDelete, goalTitle }:
       whileHover={cardHover}
       className="flex items-center gap-3 p-4 bg-cosmic-surface-2 border border-cosmic-border rounded-xl"
     >
-      <button
-        onClick={() => onToggleToday(habit)}
-        aria-label={doneToday ? 'Unmark today' : 'Mark done for today'}
-        className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-          doneToday ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-        }`}
-      >
-        <AnimatePresence>
-          {doneToday && (
-            <motion.svg
-              width="10"
-              height="10"
-              viewBox="0 0 10 10"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-            >
-              <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-            </motion.svg>
-          )}
-        </AnimatePresence>
-      </button>
+      <CheckToggle
+        done={doneToday}
+        onToggle={() => onToggleToday(habit)}
+        ariaLabel={doneToday ? 'Unmark today' : 'Mark done for today'}
+        variant="habit"
+        streak={doneToday ? streak : calculateStreak([...habit.completedDates, todayStr()], habit.days_of_week)}
+      />
 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-orbital-text">{habit.name}</p>

@@ -7,6 +7,7 @@ import { calculateStreak, todayStr } from '../../lib/habitStreak';
 import { cardHover, hoverScale, listItem, listItemTransition, tapScale } from '../../lib/motion';
 import { categoryColor } from '../../lib/categoryColor';
 import { useDayOverview } from '../../hooks/useDayOverview';
+import CheckToggle from '../shared/CheckToggle';
 
 interface TodaysAgendaCardProps {
   userId: string;
@@ -118,19 +119,12 @@ export default function TodaysAgendaCard({
                 transition={listItemTransition}
                 className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg"
               >
-                <button
-                  onClick={() => onToggleTask(task.id, done ? 'todo' : 'done')}
-                  aria-label={done ? 'Mark as not done' : 'Mark as done'}
-                  className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-                    done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                  }`}
-                >
-                  {done && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
+                <CheckToggle
+                  done={done}
+                  onToggle={() => onToggleTask(task.id, done ? 'todo' : 'done')}
+                  ariaLabel={done ? 'Mark as not done' : 'Mark as done'}
+                  variant="task"
+                />
 
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${done ? 'text-orbital-text-faint line-through' : 'text-orbital-text'}`}>
@@ -174,19 +168,13 @@ export default function TodaysAgendaCard({
                 transition={listItemTransition}
                 className="flex items-center gap-3 p-3 bg-cosmic-surface-3/60 rounded-lg"
               >
-                <button
-                  onClick={() => onToggleHabit(habit)}
-                  aria-label={done ? 'Unmark today' : 'Mark done for today'}
-                  className={`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center ${
-                    done ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                  }`}
-                >
-                  {done && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M1 5l3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
+                <CheckToggle
+                  done={done}
+                  onToggle={() => onToggleHabit(habit)}
+                  ariaLabel={done ? 'Unmark today' : 'Mark done for today'}
+                  variant="habit"
+                  streak={done ? streak : calculateStreak([...habit.completedDates, today], habit.days_of_week)}
+                />
 
                 <div className="flex-1 min-w-0 flex items-center gap-1.5">
                   <Repeat2 size={12} className="text-orbital-accent-2 flex-shrink-0" strokeWidth={2} />
