@@ -92,19 +92,22 @@ export default function ResetPasswordForm() {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={10}
               disabled={!ready}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1 disabled:opacity-50"
             />
+            <p className="mt-1 text-[11px] text-orbital-text-faint">
+              At least 10 characters, with upper and lower case letters and a number.
+            </p>
           </div>
           <div>
             <label className="text-xs font-semibold text-orbital-text-faint uppercase tracking-wider">Confirm password</label>
             <input
               type="password"
               required
-              minLength={6}
+              minLength={10}
               disabled={!ready}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

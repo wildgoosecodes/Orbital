@@ -66,11 +66,14 @@ export default function SignupForm() {
             <input
               type="password"
               required
-              minLength={6}
+              minLength={10}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
             />
+            <p className="mt-1 text-[11px] text-orbital-text-faint">
+              At least 10 characters, with upper and lower case letters and a number.
+            </p>
           </div>
 
           {error && <p className="text-sm text-rose-400">{error}</p>}
