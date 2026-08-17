@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -7,18 +8,15 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 const MODEL = 'gemini-flash-latest';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const RETRYABLE_STATUS = new Set([429, 503]);
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-  });
+function makeJson(cors: Record<string, string>) {
+  return function json(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    });
+  };
 }
 
 async function callGemini(body: unknown): Promise<Record<string, unknown>> {
@@ -40,7 +38,10 @@ async function callGemini(body: unknown): Promise<Record<string, unknown>> {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
+  const cors = corsHeaders(req);
+  const json = makeJson(cors);
+
+  if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
 
   try {
     const authHeader = req.headers.get('Authorization');

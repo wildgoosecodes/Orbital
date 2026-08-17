@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { timingSafeEqualString } from '../_shared/timingSafeEqual.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -25,7 +26,7 @@ interface HabitRow {
 }
 
 Deno.serve(async (req) => {
-  if (req.headers.get('x-cron-secret') !== CRON_SECRET) {
+  if (!timingSafeEqualString(req.headers.get('x-cron-secret') ?? '', CRON_SECRET)) {
     return new Response('Unauthorized', { status: 401 });
   }
 
