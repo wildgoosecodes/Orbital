@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarClock } from 'lucide-react';
-import type { Event } from '../../types/database';
+import type { Event, TaskPriority } from '../../types/database';
 import type { Tab } from '../../lib/navTabs';
 import { upcomingEvents } from '../../lib/overviewStats';
 import { cardHover, hoverScale, listItem, listItemTransition, tapScale } from '../../lib/motion';
@@ -10,6 +10,13 @@ interface UpcomingEventsCardProps {
   loading: boolean;
   onNavigate: (tab: Tab) => void;
 }
+
+// Same mapping TodaysAgendaCard uses for task priority, kept visually consistent.
+const PRIORITY_STYLES: Record<TaskPriority, string> = {
+  low: 'bg-cosmic-surface-3 text-orbital-text-muted',
+  medium: 'bg-amber-500/10 text-amber-400',
+  high: 'bg-rose-500/10 text-rose-400',
+};
 
 function formatWhen(event: Event): string {
   const start = new Date(event.start_at);
@@ -60,6 +67,9 @@ export default function UpcomingEventsCard({ events, loading, onNavigate }: Upco
             >
               <CalendarClock size={14} className="text-sky-400 flex-shrink-0" strokeWidth={2} />
               <p className="flex-1 min-w-0 text-sm text-orbital-text truncate">{event.title}</p>
+              <span className={`flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${PRIORITY_STYLES[event.priority]}`}>
+                {event.priority}
+              </span>
               <span className="flex-shrink-0 text-[11px] text-orbital-text-faint">{formatWhen(event)}</span>
             </motion.div>
           ))}

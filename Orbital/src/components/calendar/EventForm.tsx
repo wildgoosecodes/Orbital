@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import type { NewEventInput } from '../../hooks/useEvents';
-import type { Event } from '../../types/database';
+import type { Event, TaskPriority } from '../../types/database';
 import { tapScale } from '../../lib/motion';
 
 interface EventFormProps {
@@ -50,6 +50,7 @@ export default function EventForm({ initialEvent, defaultDate, onSubmit, onCance
   const [reminder, setReminder] = useState(
     initialEvent?.reminder_minutes_before != null ? String(initialEvent.reminder_minutes_before) : '',
   );
+  const [priority, setPriority] = useState<TaskPriority>(initialEvent?.priority ?? 'medium');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
@@ -71,6 +72,7 @@ export default function EventForm({ initialEvent, defaultDate, onSubmit, onCance
         start_at,
         end_at,
         all_day: allDay,
+        priority,
         reminder_minutes_before: reminder ? Number(reminder) : null,
       });
 
@@ -82,6 +84,7 @@ export default function EventForm({ initialEvent, defaultDate, onSubmit, onCance
         setStartTime('09:00');
         setEndTime('');
         setReminder('');
+        setPriority('medium');
       }
     } finally {
       setSubmitting(false);
@@ -156,6 +159,15 @@ export default function EventForm({ initialEvent, defaultDate, onSubmit, onCance
               {opt.label}
             </option>
           ))}
+        </select>
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as TaskPriority)}
+          className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+        >
+          <option value="low">Low priority</option>
+          <option value="medium">Medium priority</option>
+          <option value="high">High priority</option>
         </select>
       </div>
 

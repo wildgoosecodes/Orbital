@@ -5,7 +5,7 @@ import { Trophy } from 'lucide-react';
 import type { YearGoalWithMilestones } from '../../hooks/useRoadmap';
 import type { NewMilestoneInput, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
 import type { NewTaskInput } from '../../hooks/useTasks';
-import type { Milestone } from '../../types/database';
+import type { Goal, Milestone } from '../../types/database';
 import MilestoneNode from './MilestoneNode';
 import { tapScale } from '../../lib/motion';
 
@@ -13,16 +13,17 @@ interface YearGoalCardProps {
   yearGoal: YearGoalWithMilestones;
   onAddMilestone: (input: NewMilestoneInput, position: number) => Promise<void>;
   onRemoveYearGoal: (id: string) => Promise<void>;
-  onAddGoal: (input: NewRoadmapGoalInput) => Promise<void>;
+  onAddGoal: (input: NewRoadmapGoalInput) => Promise<Goal>;
   onAddTask: (input: NewTaskInput) => Promise<void>;
   onUpdateGoalProgress: (id: string, progress: number) => Promise<void>;
+  onArchiveGoal: (id: string) => Promise<void>;
   onUpdateMilestoneStatus: (id: string, status: Milestone['status']) => Promise<void>;
   onRemoveMilestone: (id: string) => Promise<void>;
   onRemoveGoal: (id: string) => Promise<void>;
 }
 
 function rollupProgress(yearGoal: YearGoalWithMilestones): number {
-  const allGoals = yearGoal.milestones.flatMap((m) => m.goals);
+  const allGoals = [...yearGoal.milestones.flatMap((m) => m.goals), ...yearGoal.directGoals];
   if (allGoals.length === 0) return 0;
   return Math.round(allGoals.reduce((sum, g) => sum + g.progress, 0) / allGoals.length);
 }
@@ -34,6 +35,7 @@ export default function YearGoalCard({
   onAddGoal,
   onAddTask,
   onUpdateGoalProgress,
+  onArchiveGoal,
   onUpdateMilestoneStatus,
   onRemoveMilestone,
   onRemoveGoal,
@@ -91,6 +93,24 @@ export default function YearGoalCard({
         />
       </div>
 
+      {yearGoal.directGoals.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[11px] font-semibold text-orbital-text-faint uppercase tracking-wide">Linked goals</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {yearGoal.directGoals.map((goal) => (
+              <span
+                key={goal.id}
+                className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full bg-cosmic-surface-3 border border-cosmic-border text-orbital-text-muted"
+                title="Managed from the Goals tab"
+              >
+                {goal.title}
+                <span className="text-orbital-accent-2 font-semibold">{goal.progress}%</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 space-y-3">
         {yearGoal.milestones.length === 0 && (
           <p className="text-sm text-orbital-text-faint">No milestones yet — add one below to start the path.</p>
@@ -108,6 +128,7 @@ export default function YearGoalCard({
               onAddGoal={onAddGoal}
               onAddTask={onAddTask}
               onUpdateGoalProgress={onUpdateGoalProgress}
+              onArchiveGoal={onArchiveGoal}
               onUpdateStatus={onUpdateMilestoneStatus}
               onRemoveMilestone={onRemoveMilestone}
               onRemoveGoal={onRemoveGoal}

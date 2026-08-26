@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
-import type { Event } from '../types/database';
+import type { Event, TaskPriority } from '../types/database';
 
 export interface NewEventInput {
   title: string;
@@ -9,6 +9,7 @@ export interface NewEventInput {
   start_at: string;
   end_at?: string;
   all_day?: boolean;
+  priority?: TaskPriority;
   reminder_minutes_before?: number | null;
 }
 
@@ -42,6 +43,7 @@ export function useEvents(userId: string) {
         start_at: input.start_at,
         end_at: input.end_at || null,
         all_day: input.all_day ?? false,
+        priority: input.priority ?? 'medium',
         reminder_minutes_before: input.reminder_minutes_before ?? null,
       });
       if (error) throw error;
@@ -60,6 +62,7 @@ export function useEvents(userId: string) {
           start_at: updates.start_at,
           end_at: updates.end_at || null,
           all_day: updates.all_day ?? false,
+          priority: updates.priority ?? 'medium',
           reminder_minutes_before: updates.reminder_minutes_before ?? null,
           // A reminder that's already fired should re-arm if the user pushes
           // the event's time out or changes the reminder offset.

@@ -6,6 +6,8 @@ import { computePeriodRange } from '../lib/goalPeriods';
 export interface NewGoalInput {
   title: string;
   period_type: GoalPeriodType;
+  year_goal_id?: string | null;
+  deadline?: string | null;
 }
 
 export async function fetchGoals(): Promise<Goal[]> {
@@ -31,13 +33,31 @@ export function useGoals(userId: string) {
   const addGoal = useMutation({
     mutationFn: async (input: NewGoalInput) => {
       const { start, end } = computePeriodRange(input.period_type);
-      const { error } = await supabase.from('goals').insert({
-        user_id: userId,
-        title: input.title,
-        period_type: input.period_type,
-        period_start: start,
-        period_end: end,
-      });
+      const { data, error } = await supabase
+        .from('goals')
+        .insert({
+          user_id: userId,
+          title: input.title,
+          period_type: input.period_type,
+          period_start: start,
+          period_end: end,
+          year_goal_id: input.year_goal_id ?? null,
+          deadline: input.deadline || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Goal;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+
+  const archiveGoal = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('goals')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
@@ -80,6 +100,7 @@ export function useGoals(userId: string) {
     loading,
     error: error ? (error as Error).message : null,
     addGoal: (input: NewGoalInput) => addGoal.mutateAsync(input),
+    archiveGoal: (id: string) => archiveGoal.mutateAsync(id),
     updateProgress: (id: string, progress: number) => updateProgress.mutateAsync({ id, progress }),
     removeGoal: (id: string) => removeGoal.mutateAsync(id),
   };

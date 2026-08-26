@@ -18,6 +18,7 @@ export default function RoadmapView({ userId }: RoadmapViewProps) {
     addYearGoal,
     addMilestone,
     addGoal,
+    archiveGoal,
     updateGoalProgress,
     updateMilestoneStatus,
     removeYearGoal,
@@ -98,6 +99,7 @@ export default function RoadmapView({ userId }: RoadmapViewProps) {
             onAddGoal={addGoal}
             onAddTask={addTask}
             onUpdateGoalProgress={updateGoalProgress}
+            onArchiveGoal={archiveGoal}
             onUpdateMilestoneStatus={updateMilestoneStatus}
             onRemoveMilestone={removeMilestone}
             onRemoveGoal={removeGoal}

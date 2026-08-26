@@ -56,11 +56,13 @@ export interface Goal {
   id: string;
   user_id: string;
   milestone_id: string | null;
+  year_goal_id: string | null;
   title: string;
   description: string | null;
   period_type: GoalPeriodType;
   period_start: string;
   period_end: string;
+  deadline: string | null;
   progress: number;
   status: GoalStatus;
   created_at: string;
@@ -91,6 +93,7 @@ export interface Event {
   start_at: string;
   end_at: string | null;
   all_day: boolean;
+  priority: TaskPriority;
   reminder_minutes_before: number | null;
   reminder_sent_at: string | null;
   google_event_id: string | null;

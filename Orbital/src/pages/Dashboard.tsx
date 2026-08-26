@@ -8,6 +8,7 @@ import VoiceMode from '../components/assistant/VoiceMode';
 import TaskList from '../components/tasks/TaskList';
 import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
+import GoalsView from '../components/goals/GoalsView';
 import RoadmapView from '../components/roadmap/RoadmapView';
 import OverviewPage from '../components/overview/OverviewPage';
 import { useAuth } from '../hooks/useAuth';
@@ -82,6 +83,7 @@ export default function Dashboard() {
                 <Route path="tasks" element={<TaskList userId={userId} />} />
                 <Route path="calendar" element={<CalendarView userId={userId} />} />
                 <Route path="habits" element={<HabitList userId={userId} />} />
+                <Route path="goals" element={<GoalsView userId={userId} />} />
                 <Route path="roadmap" element={<RoadmapView userId={userId} />} />
               </Routes>
             </div>

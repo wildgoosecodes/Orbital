@@ -19,6 +19,10 @@ export interface MilestoneWithGoals extends Milestone {
 
 export interface YearGoalWithMilestones extends YearGoal {
   milestones: MilestoneWithGoals[];
+  // Goals linked straight to this Year Goal, bypassing Milestone entirely —
+  // created from the dedicated Goals tab. Visual-only in the tree view; still
+  // counted in rollups the same as milestone-nested goals.
+  directGoals: GoalWithItems[];
 }
 
 export interface NewYearGoalInput {
@@ -36,6 +40,7 @@ export interface NewRoadmapGoalInput {
   milestone_id: string;
   title: string;
   period_type: GoalPeriodType;
+  deadline?: string | null;
 }
 
 async function fetchYearGoals(): Promise<YearGoal[]> {
@@ -89,20 +94,30 @@ function buildTree(
     habitsByGoal.set(habit.goal_id, list);
   }
 
-  const goalsByMilestone = new Map<string, GoalWithItems[]>();
-  for (const goal of goalsData) {
-    if (!goal.milestone_id) continue;
+  function withItems(goal: Goal): GoalWithItems {
     const goalTasks = tasksByGoal.get(goal.id) || [];
     const goalHabits = habitsByGoal.get(goal.id) || [];
-    const withItems: GoalWithItems = {
+    return {
       ...goal,
-      progress: computeGoalProgress(goal, goalTasks, goalHabits),
+      progress: computeGoalProgress(goal, goalTasks),
       tasks: goalTasks,
       habits: goalHabits,
     };
-    const list = goalsByMilestone.get(goal.milestone_id) || [];
-    list.push(withItems);
-    goalsByMilestone.set(goal.milestone_id, list);
+  }
+
+  const goalsByMilestone = new Map<string, GoalWithItems[]>();
+  const directGoalsByYearGoal = new Map<string, GoalWithItems[]>();
+  for (const goal of goalsData) {
+    if (goal.milestone_id) {
+      const list = goalsByMilestone.get(goal.milestone_id) || [];
+      list.push(withItems(goal));
+      goalsByMilestone.set(goal.milestone_id, list);
+    } else if (goal.year_goal_id) {
+      // Created from the dedicated Goals tab, linked straight to a Year Goal.
+      const list = directGoalsByYearGoal.get(goal.year_goal_id) || [];
+      list.push(withItems(goal));
+      directGoalsByYearGoal.set(goal.year_goal_id, list);
+    }
   }
 
   const milestonesByYearGoal = new Map<string, MilestoneWithGoals[]>();
@@ -113,7 +128,11 @@ function buildTree(
     milestonesByYearGoal.set(milestone.year_goal_id, list);
   }
 
-  return yearGoalsData.map((yg) => ({ ...yg, milestones: milestonesByYearGoal.get(yg.id) || [] }));
+  return yearGoalsData.map((yg) => ({
+    ...yg,
+    milestones: milestonesByYearGoal.get(yg.id) || [],
+    directGoals: directGoalsByYearGoal.get(yg.id) || [],
+  }));
 }
 
 export function useRoadmap(userId: string) {
@@ -176,14 +195,31 @@ export function useRoadmap(userId: string) {
   const addGoal = useMutation({
     mutationFn: async (input: NewRoadmapGoalInput) => {
       const { start, end } = computePeriodRange(input.period_type);
-      const { error } = await supabase.from('goals').insert({
-        user_id: userId,
-        milestone_id: input.milestone_id,
-        title: input.title,
-        period_type: input.period_type,
-        period_start: start,
-        period_end: end,
-      });
+      const { data, error } = await supabase
+        .from('goals')
+        .insert({
+          user_id: userId,
+          milestone_id: input.milestone_id,
+          title: input.title,
+          period_type: input.period_type,
+          period_start: start,
+          period_end: end,
+          deadline: input.deadline || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Goal;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey }),
+  });
+
+  const archiveGoal = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('goals')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsKey }),
@@ -264,6 +300,7 @@ export function useRoadmap(userId: string) {
     addYearGoal: (input: NewYearGoalInput) => addYearGoal.mutateAsync(input),
     addMilestone: (input: NewMilestoneInput, position: number) => addMilestone.mutateAsync({ input, position }),
     addGoal: (input: NewRoadmapGoalInput) => addGoal.mutateAsync(input),
+    archiveGoal: (id: string) => archiveGoal.mutateAsync(id),
     updateGoalProgress: (id: string, progress: number) => updateGoalProgress.mutateAsync({ id, progress }),
     updateMilestoneStatus: (id: string, status: Milestone['status']) => updateMilestoneStatus.mutateAsync({ id, status }),
     removeYearGoal: (id: string) => removeYearGoal.mutateAsync(id),

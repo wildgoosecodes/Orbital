@@ -1,19 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { GoalWithItems, MilestoneWithGoals, NewRoadmapGoalInput } from '../../hooks/useRoadmap';
 import type { NewTaskInput } from '../../hooks/useTasks';
-import type { GoalPeriodType, Milestone } from '../../types/database';
-import { calculateStreak } from '../../lib/habitStreak';
+import type { Goal, GoalPeriodType, Milestone } from '../../types/database';
 import { expandCollapse, expandCollapseTransition, tapScale } from '../../lib/motion';
+import GoalRow from '../goals/GoalRow';
 
 interface MilestoneNodeProps {
   milestone: MilestoneWithGoals;
   isLast: boolean;
-  onAddGoal: (input: NewRoadmapGoalInput) => Promise<void>;
+  onAddGoal: (input: NewRoadmapGoalInput) => Promise<Goal>;
   onAddTask: (input: NewTaskInput) => Promise<void>;
   onUpdateGoalProgress: (id: string, progress: number) => Promise<void>;
+  onArchiveGoal: (id: string) => Promise<void>;
   onUpdateStatus: (id: string, status: Milestone['status']) => Promise<void>;
   onRemoveMilestone: (id: string) => Promise<void>;
   onRemoveGoal: (id: string) => Promise<void>;
@@ -48,23 +49,51 @@ export default function MilestoneNode({
   onAddGoal,
   onAddTask,
   onUpdateGoalProgress,
+  onArchiveGoal,
   onUpdateStatus,
   onRemoveMilestone,
   onRemoveGoal,
 }: MilestoneNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const [goalTitle, setGoalTitle] = useState('');
+  const [firstTaskTitle, setFirstTaskTitle] = useState('');
   const [periodType, setPeriodType] = useState<GoalPeriodType>('weekly');
+  const [deadline, setDeadline] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [addGoalError, setAddGoalError] = useState<string | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
+  // Rollup must see every goal, including completed/archived ones, so a
+  // completed goal keeps contributing its locked-in 100% upward — only the
+  // rendered list below is filtered.
   const progress = rollupProgress(milestone.goals);
+  const activeGoals = milestone.goals.filter((g) => g.status !== 'completed');
+  const completedGoals = milestone.goals.filter((g) => g.status === 'completed');
 
   async function handleAddGoal(e: FormEvent) {
     e.preventDefault();
-    if (!goalTitle.trim()) return;
+    if (!goalTitle.trim() || !firstTaskTitle.trim()) return;
     setSubmitting(true);
+    setAddGoalError(null);
+    let createdGoal: Goal | null = null;
     try {
-      await onAddGoal({ milestone_id: milestone.id, title: goalTitle.trim(), period_type: periodType });
+      createdGoal = await onAddGoal({
+        milestone_id: milestone.id,
+        title: goalTitle.trim(),
+        period_type: periodType,
+        deadline: deadline || null,
+      });
+      await onAddTask({ title: firstTaskTitle.trim(), goal_id: createdGoal.id });
       setGoalTitle('');
+      setFirstTaskTitle('');
+      setDeadline('');
+    } catch {
+      if (createdGoal) {
+        // The goal was created but its required first task wasn't — roll the
+        // goal back rather than leave a task-less goal around, which would
+        // silently break the "every goal needs a task" guarantee.
+        await onRemoveGoal(createdGoal.id).catch(() => {});
+      }
+      setAddGoalError('Could not add the goal — please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -131,15 +160,56 @@ export default function MilestoneNode({
                   {milestone.goals.length === 0 && (
                     <p className="text-xs text-orbital-text-faint">No goals yet — add one below.</p>
                   )}
-                  {milestone.goals.map((goal) => (
+                  {activeGoals.map((goal) => (
                     <GoalRow
                       key={goal.id}
                       goal={goal}
                       onUpdateProgress={onUpdateGoalProgress}
+                      onArchive={onArchiveGoal}
                       onDelete={onRemoveGoal}
                       onAddTask={onAddTask}
                     />
                   ))}
+
+                  {completedGoals.length > 0 && (
+                    <div>
+                      <button
+                        onClick={() => setShowCompleted((v) => !v)}
+                        className="flex items-center gap-1 text-[11px] text-orbital-text-faint hover:text-orbital-text-muted"
+                      >
+                        <ChevronDown
+                          size={10}
+                          className={`transition-transform ${showCompleted ? 'rotate-0' : '-rotate-90'}`}
+                        />
+                        {completedGoals.length} completed
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {showCompleted && (
+                          <motion.div
+                            variants={expandCollapse}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={expandCollapseTransition}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-2 space-y-2">
+                              {completedGoals.map((goal) => (
+                                <GoalRow
+                                  key={goal.id}
+                                  goal={goal}
+                                  onUpdateProgress={onUpdateGoalProgress}
+                                  onArchive={onArchiveGoal}
+                                  onDelete={onRemoveGoal}
+                                  onAddTask={onAddTask}
+                                />
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
 
                   <form onSubmit={handleAddGoal} className="flex flex-col sm:flex-row gap-2 pt-1">
                     <input
@@ -147,6 +217,13 @@ export default function MilestoneNode({
                       placeholder="Add a goal..."
                       value={goalTitle}
                       onChange={(e) => setGoalTitle(e.target.value)}
+                      className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+                    />
+                    <input
+                      type="text"
+                      placeholder="First task..."
+                      value={firstTaskTitle}
+                      onChange={(e) => setFirstTaskTitle(e.target.value)}
                       className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
                     />
                     <select
@@ -158,15 +235,29 @@ export default function MilestoneNode({
                       <option value="quarterly">Quarterly</option>
                       <option value="yearly">Yearly</option>
                     </select>
+                    <input
+                      type="date"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      aria-label="Deadline (optional)"
+                      className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-2.5 py-1.5 text-xs text-orbital-text focus:outline-none focus:border-orbital-accent-1"
+                    />
                     <motion.button
                       whileTap={tapScale}
                       type="submit"
-                      disabled={submitting || !goalTitle.trim()}
+                      disabled={submitting || !goalTitle.trim() || !firstTaskTitle.trim()}
                       className="bg-orbital-accent-1 hover:bg-orbital-accent-1/90 disabled:opacity-50 text-orbital-text font-medium text-xs rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap"
                     >
                       Add goal
                     </motion.button>
                   </form>
+                  {addGoalError ? (
+                    <p className="text-[11px] text-rose-400">{addGoalError}</p>
+                  ) : (
+                    <p className="text-[11px] text-orbital-text-faint">
+                      Every goal needs at least one task — its progress is measured by tasks completed. Add more from the goal's own row below.
+                    </p>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -177,165 +268,3 @@ export default function MilestoneNode({
   );
 }
 
-function GoalRow({
-  goal,
-  onUpdateProgress,
-  onDelete,
-  onAddTask,
-}: {
-  goal: GoalWithItems;
-  onUpdateProgress: (id: string, progress: number) => void;
-  onDelete: (id: string) => void;
-  onAddTask: (input: NewTaskInput) => Promise<void>;
-}) {
-  const [value, setValue] = useState(goal.progress);
-  const prevProgress = useRef(goal.progress);
-  const [justCompleted, setJustCompleted] = useState(false);
-  const [itemsExpanded, setItemsExpanded] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [addingTask, setAddingTask] = useState(false);
-  const hasLinkedItems = goal.tasks.length > 0 || goal.habits.length > 0;
-
-  async function handleAddTask(e: FormEvent) {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-    setAddingTask(true);
-    try {
-      await onAddTask({ title: newTaskTitle.trim(), goal_id: goal.id });
-      setNewTaskTitle('');
-    } finally {
-      setAddingTask(false);
-    }
-  }
-
-  useEffect(() => {
-    setValue(goal.progress);
-    if (prevProgress.current < 100 && goal.progress >= 100) {
-      setJustCompleted(true);
-      const t = setTimeout(() => setJustCompleted(false), 700);
-      prevProgress.current = goal.progress;
-      return () => clearTimeout(t);
-    }
-    prevProgress.current = goal.progress;
-  }, [goal.progress]);
-
-  function commit() {
-    if (value !== goal.progress) onUpdateProgress(goal.id, value);
-  }
-
-  return (
-    <motion.div
-      layout
-      animate={justCompleted ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`p-2.5 bg-cosmic-bg border rounded-lg ${justCompleted ? 'border-emerald-500/60' : 'border-cosmic-border'}`}
-    >
-      <div className="flex items-center justify-between text-xs">
-        <button
-          onClick={() => setItemsExpanded((v) => !v)}
-          className="flex-1 flex items-center gap-1.5 text-left min-w-0"
-        >
-          <ChevronDown
-            size={11}
-            className={`text-orbital-text-faint flex-shrink-0 transition-transform ${itemsExpanded ? 'rotate-0' : '-rotate-90'}`}
-          />
-          <span className="text-orbital-text-muted truncate">{goal.title}</span>
-        </button>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-orbital-accent-2 font-semibold">{value}%</span>
-          <button
-            onClick={() => {
-              if (window.confirm(`Delete "${goal.title}"? This can't be undone.`)) onDelete(goal.id);
-            }}
-            aria-label="Delete goal"
-            className="text-orbital-text-faint hover:text-rose-400"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 4h10M6 4V3a1 1 0 011-1h2a1 1 0 011 1v1m2 0-.5 9a1 1 0 01-1 1H4.5a1 1 0 01-1-1L3 4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {hasLinkedItems ? (
-        <div className="mt-1.5 h-1.5 rounded-full bg-cosmic-surface-3 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-orbital-accent-1"
-            initial={{ width: 0 }}
-            animate={{ width: `${value}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
-        </div>
-      ) : (
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={value}
-          onChange={(e) => setValue(Number(e.target.value))}
-          onMouseUp={commit}
-          onTouchEnd={commit}
-          onKeyUp={commit}
-          className="mt-1.5 w-full accent-orbital-accent-1"
-        />
-      )}
-
-      <AnimatePresence initial={false}>
-        {itemsExpanded && (
-          <motion.div
-            variants={expandCollapse}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={expandCollapseTransition}
-            className="overflow-hidden"
-          >
-            <div className="mt-2 space-y-1.5 pl-1">
-              {!hasLinkedItems && (
-                <p className="text-[11px] text-orbital-text-faint">No tasks or habits linked yet.</p>
-              )}
-              {goal.tasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-1.5 text-[11px]">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full border flex-shrink-0 ${
-                      task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-orbital-text-faint'
-                    }`}
-                  />
-                  <span className={`truncate ${task.status === 'done' ? 'text-orbital-text-faint line-through' : 'text-orbital-text-muted'}`}>
-                    {task.title}
-                  </span>
-                </div>
-              ))}
-              {goal.habits.map((habit) => (
-                <div key={habit.id} className="flex items-center gap-1.5 text-[11px]">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orbital-accent-1/20 border border-orbital-accent-1/50 flex-shrink-0" />
-                  <span className="truncate text-orbital-text-muted">{habit.name}</span>
-                  <span className="flex-shrink-0 text-orbital-accent-2/70">{calculateStreak(habit.completedDates, habit.days_of_week)}d streak</span>
-                </div>
-              ))}
-
-              <form onSubmit={handleAddTask} className="flex gap-1.5 pt-0.5">
-                <input
-                  type="text"
-                  placeholder="Add a task..."
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="flex-1 min-w-0 bg-cosmic-surface-3 border border-cosmic-border rounded-md px-2 py-1 text-[11px] text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-                />
-                <motion.button
-                  whileTap={tapScale}
-                  type="submit"
-                  disabled={addingTask || !newTaskTitle.trim()}
-                  className="bg-cosmic-surface-3 hover:bg-cosmic-border disabled:opacity-50 text-orbital-text-muted font-medium text-[11px] rounded-md px-2 py-1 transition-colors whitespace-nowrap"
-                >
-                  Add
-                </motion.button>
-              </form>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}

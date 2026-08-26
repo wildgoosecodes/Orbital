@@ -142,13 +142,15 @@ const tools: ToolDef[] = [
   },
   {
     name: 'create_goal',
-    description: 'Create a new goal. The period start/end dates are computed automatically from period_type starting today. Pass milestone_id to place it under a roadmap milestone.',
+    description: 'Create a new goal. The period start/end dates are computed automatically from period_type starting today. Pass milestone_id to place it under a roadmap milestone, or year_goal_id to link it straight to a Year Goal without a milestone (the modern, preferred way — surfaced on the dedicated Goals tab). Omit both for a standalone goal.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
         period_type: { type: 'string', enum: ['weekly', 'quarterly', 'yearly'] },
         milestone_id: { type: 'string', description: 'Optional id of the milestone this goal belongs to.' },
+        year_goal_id: { type: 'string', description: 'Optional id of a Year Goal this goal links directly to (skips Milestone).' },
+        deadline: { type: 'string', description: 'Optional ISO date (YYYY-MM-DD) the goal is due by.' },
       },
       required: ['title', 'period_type'],
     },
@@ -226,6 +228,7 @@ const tools: ToolDef[] = [
         start_at: { type: 'string', description: 'ISO datetime, e.g. 2026-08-01T15:00:00' },
         end_at: { type: 'string', description: 'Optional ISO datetime.' },
         all_day: { type: 'boolean', description: 'Defaults to false.' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Defaults to medium.' },
         reminder_minutes_before: { type: 'number', description: 'Minutes before start_at to send a push notification reminder. Omit for no reminder.' },
       },
       required: ['title', 'start_at'],
@@ -233,7 +236,7 @@ const tools: ToolDef[] = [
   },
   {
     name: 'update_event',
-    description: "Update an event's title, time, location, description, or reminder.",
+    description: "Update an event's title, time, location, description, priority, or reminder.",
     input_schema: {
       type: 'object',
       properties: {
@@ -244,6 +247,7 @@ const tools: ToolDef[] = [
         start_at: { type: 'string' },
         end_at: { type: 'string' },
         all_day: { type: 'boolean' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high'] },
         reminder_minutes_before: { type: 'number' },
       },
       required: ['event_id'],
@@ -388,6 +392,8 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           period_start: start.toISOString().slice(0, 10),
           period_end: end.toISOString().slice(0, 10),
           milestone_id: input.milestone_id ?? null,
+          year_goal_id: input.year_goal_id ?? null,
+          deadline: input.deadline ?? null,
         })
         .select()
         .single();
@@ -422,11 +428,18 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
       if (goalsRes.error) throw goalsRes.error;
 
       const goalsByMilestone = new Map<string, unknown[]>();
+      const directGoalsByYearGoal = new Map<string, unknown[]>();
       for (const goal of goalsRes.data) {
-        if (!goal.milestone_id) continue;
-        const list = goalsByMilestone.get(goal.milestone_id) || [];
-        list.push(goal);
-        goalsByMilestone.set(goal.milestone_id, list);
+        if (goal.milestone_id) {
+          const list = goalsByMilestone.get(goal.milestone_id) || [];
+          list.push(goal);
+          goalsByMilestone.set(goal.milestone_id, list);
+        } else if (goal.year_goal_id) {
+          // Linked straight to a Year Goal via the dedicated Goals tab, no milestone.
+          const list = directGoalsByYearGoal.get(goal.year_goal_id) || [];
+          list.push(goal);
+          directGoalsByYearGoal.set(goal.year_goal_id, list);
+        }
       }
       const milestonesByYearGoal = new Map<string, unknown[]>();
       for (const milestone of milestonesRes.data) {
@@ -438,6 +451,7 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
       return yearGoalsRes.data.map((yg: { id: string }) => ({
         ...yg,
         milestones: milestonesByYearGoal.get(yg.id) || [],
+        direct_goals: directGoalsByYearGoal.get(yg.id) || [],
       }));
     }
     case 'create_year_goal': {
@@ -489,6 +503,7 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           start_at: input.start_at,
           end_at: input.end_at ?? null,
           all_day: input.all_day ?? false,
+          priority: input.priority ?? 'medium',
           reminder_minutes_before: input.reminder_minutes_before ?? null,
         })
         .select()
