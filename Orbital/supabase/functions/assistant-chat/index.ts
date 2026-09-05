@@ -73,13 +73,15 @@ const tools: ToolDef[] = [
         due_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
         category: { type: 'string' },
         goal_id: { type: 'string', description: 'Optional id of the roadmap goal this task ladders up to.' },
+        next_action: { type: 'string', description: 'Optional short, concrete next physical step for this task — shown when it becomes the user\'s current focus.' },
+        estimated_minutes: { type: 'number', description: 'Optional suggested focus-session length in minutes.' },
       },
       required: ['title'],
     },
   },
   {
     name: 'update_task',
-    description: "Update a task's status, title, priority, due date, category, description, or linked goal.",
+    description: "Update a task's status, title, priority, due date, category, description, linked goal, next action, or estimated duration.",
     input_schema: {
       type: 'object',
       properties: {
@@ -91,6 +93,8 @@ const tools: ToolDef[] = [
         due_date: { type: 'string' },
         category: { type: 'string' },
         goal_id: { type: 'string' },
+        next_action: { type: 'string' },
+        estimated_minutes: { type: 'number' },
       },
       required: ['task_id'],
     },
@@ -302,6 +306,8 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           due_date: input.due_date ?? null,
           category: input.category ?? null,
           goal_id: input.goal_id ?? null,
+          next_action: input.next_action ?? null,
+          estimated_minutes: input.estimated_minutes ?? null,
         })
         .select()
         .single();

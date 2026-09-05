@@ -10,7 +10,7 @@ import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
 import GoalsView from '../components/goals/GoalsView';
 import RoadmapView from '../components/roadmap/RoadmapView';
-import OverviewPage from '../components/overview/OverviewPage';
+import FocusDashboard from '../components/focus/FocusDashboard';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { useAssistantChat } from '../hooks/useAssistantChat';
@@ -92,7 +92,7 @@ export default function Dashboard() {
               <Route
                 index
                 element={
-                  <OverviewPage
+                  <FocusDashboard
                     userId={userId}
                     userEmail={userEmail}
                     profile={profile}

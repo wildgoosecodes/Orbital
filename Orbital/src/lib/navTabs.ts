@@ -3,7 +3,7 @@ import { CalendarDays, CheckSquare, LayoutDashboard, Map, Repeat2, Sparkles, Tar
 export type Tab = 'overview' | 'tasks' | 'calendar' | 'habits' | 'goals' | 'roadmap' | 'assistant';
 
 export const TABS: { tab: Tab; label: string; icon: typeof LayoutDashboard; xlHidden?: boolean }[] = [
-  { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { tab: 'overview', label: 'Now', icon: LayoutDashboard },
   { tab: 'tasks', label: 'Tasks', icon: CheckSquare },
   { tab: 'calendar', label: 'Calendar', icon: CalendarDays },
   { tab: 'habits', label: 'Habits', icon: Repeat2 },

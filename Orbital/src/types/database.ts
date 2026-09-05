@@ -12,8 +12,25 @@ export interface Task {
   due_date: string | null;
   category: string | null;
   time_block_id: string | null;
+  next_action: string | null;
+  estimated_minutes: number | null;
+  pinned_now: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export type FocusSessionStatus = 'completed' | 'abandoned';
+
+export interface FocusSession {
+  id: string;
+  user_id: string;
+  task_id: string | null;
+  planned_minutes: number;
+  started_at: string;
+  ended_at: string;
+  actual_minutes: number;
+  status: FocusSessionStatus;
+  created_at: string;
 }
 
 export interface Profile {
