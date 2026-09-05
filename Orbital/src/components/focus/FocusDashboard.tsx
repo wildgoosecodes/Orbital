@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useTasks } from '../../hooks/useTasks';
 import { useGoals } from '../../hooks/useGoals';
+import { useHabits } from '../../hooks/useHabits';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import { useFocusSessions } from '../../hooks/useFocusSessions';
 import { pickNow, pickNext } from '../../lib/nowSelection';
+import { displayNameFromEmail } from '../../lib/overviewStats';
 import type { Task } from '../../types/database';
 import type { Tab } from '../../lib/navTabs';
 import type { Profile } from '../../types/database';
 import NowCard from './NowCard';
 import FocusMode from './FocusMode';
 import LaterList from './LaterList';
+import FocusHeader from './FocusHeader';
+import AnalyticsSection from './AnalyticsSection';
 
 interface FocusDashboardProps {
   userId: string;
@@ -24,11 +29,16 @@ interface ActiveFocusSession {
   startedAt: string;
 }
 
-export default function FocusDashboard({ userId, onNavigate }: FocusDashboardProps) {
+export default function FocusDashboard({ userId, userEmail, profile, onNavigate, onOpenVoiceMode }: FocusDashboardProps) {
   const { tasks, loading, addTask, setStatus, setFocusFields, pinNow } = useTasks(userId);
   const { goals } = useGoals(userId);
+  const { habits, loading: habitsLoading } = useHabits(userId);
+  const { last7Days, loading: analyticsLoading } = useAnalytics(userId);
   const { logSession } = useFocusSessions(userId);
   const [session, setSession] = useState<ActiveFocusSession | null>(null);
+
+  const name =
+    profile?.display_name && profile.display_name !== userEmail ? profile.display_name : displayNameFromEmail(userEmail);
 
   const nowTask = pickNow(tasks);
   const nextTask = pickNext(tasks, nowTask);
@@ -69,6 +79,8 @@ export default function FocusDashboard({ userId, onNavigate }: FocusDashboardPro
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
+      <FocusHeader name={name} onOpenVoiceMode={onOpenVoiceMode} />
+
       {loading ? (
         <p className="text-sm text-orbital-text-faint text-center">Loading...</p>
       ) : (
@@ -89,6 +101,15 @@ export default function FocusDashboard({ userId, onNavigate }: FocusDashboardPro
           >
             View all tasks →
           </button>
+
+          <AnalyticsSection
+            tasks={tasks}
+            habits={habits}
+            last7Days={last7Days}
+            tasksLoading={loading}
+            habitsLoading={habitsLoading}
+            analyticsLoading={analyticsLoading}
+          />
         </>
       )}
 
