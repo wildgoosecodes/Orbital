@@ -1,25 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import { CHANGELOG } from '../../data/changelog';
-
-const SEEN_KEY = 'orbital.whatsnew.lastSeenVersion';
-const latestVersion = CHANGELOG[0]?.version ?? '';
+import { hasUnseenChangelog, markChangelogSeen } from '../../data/changelog';
 
 interface WhatsNewTriggerProps {
   onOpen: () => void;
 }
 
 export default function WhatsNewTrigger({ onOpen }: WhatsNewTriggerProps) {
-  const [hasUnseen, setHasUnseen] = useState(false);
-
-  useEffect(() => {
-    const lastSeen = localStorage.getItem(SEEN_KEY);
-    setHasUnseen(lastSeen !== latestVersion);
-  }, []);
+  const [hasUnseen, setHasUnseen] = useState(() => hasUnseenChangelog());
 
   function handleClick() {
     setHasUnseen(false);
-    localStorage.setItem(SEEN_KEY, latestVersion);
+    markChangelogSeen();
     onOpen();
   }
 

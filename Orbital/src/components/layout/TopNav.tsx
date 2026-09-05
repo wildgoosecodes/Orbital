@@ -5,6 +5,7 @@ import { LogOut, Menu, Pencil, X } from 'lucide-react';
 import OrbitalMark from '../brand/OrbitalMark';
 import WhatsNewModal from '../changelog/WhatsNewModal';
 import WhatsNewTrigger from '../changelog/WhatsNewTrigger';
+import { hasUnseenChangelog, markChangelogSeen } from '../../data/changelog';
 import NotificationToggle from '../notifications/NotificationToggle';
 import EditProfileModal from '../profile/EditProfileModal';
 import { TABS, TAB_PATHS } from '../../lib/navTabs';
@@ -30,7 +31,10 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  // Surface What's New automatically the first time someone (re)loads the
+  // app after a new version ships, instead of relying on them noticing the
+  // unseen-dot in the profile dropdown.
+  const [whatsNewOpen, setWhatsNewOpen] = useState(() => hasUnseenChangelog());
   const avatarRef = useRef<HTMLDivElement>(null);
 
   const initials = userEmail.slice(0, 2).toUpperCase();
@@ -171,7 +175,13 @@ export default function TopNav({ userId, userEmail, profile, onUpdateProfile, on
       </AnimatePresence>
 
       <EditProfileModal open={editOpen} onClose={() => setEditOpen(false)} profile={profile} userEmail={userEmail} onSave={onUpdateProfile} />
-      <WhatsNewModal open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
+      <WhatsNewModal
+        open={whatsNewOpen}
+        onClose={() => {
+          setWhatsNewOpen(false);
+          markChangelogSeen();
+        }}
+      />
     </div>
   );
 }

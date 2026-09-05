@@ -6,6 +6,13 @@ declare const self: ServiceWorkerGlobalScope;
 
 precacheAndRoute(self.__WB_MANIFEST);
 
+// registerType: 'prompt' means a new worker deliberately sits in 'waiting'
+// instead of auto-activating — UpdateToast's "Update" button messages this
+// worker to skip that wait once the user actually asks for it.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 // App reads/writes live Supabase data — never let the SW serve a stale API response
 // for a same-origin path (Supabase itself is a different origin, so this is defensive).
 registerRoute(

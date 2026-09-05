@@ -9,6 +9,7 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import LandingPage from './pages/LandingPage';
 import LoadingScreen from './components/loading/LoadingScreen';
+import UpdateToast from './components/UpdateToast';
 
 // Lazy-loaded: these pull in recharts, framer-motion, the roadmap tree, and the
 // AI chat panel — real weight that shouldn't ship in the bundle every visitor
@@ -31,6 +32,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <MotionConfig reducedMotion="user">
+      <UpdateToast />
       <BrowserRouter>
         <Suspense fallback={<LoadingScreen />}>
           <Routes>

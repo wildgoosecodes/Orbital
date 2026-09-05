@@ -12,6 +12,30 @@ export interface ChangelogEntry {
 /** Newest first. Add a new entry here whenever a shipped batch of work is worth telling users about. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4',
+    date: '2026-09-05',
+    features: [
+      {
+        title: 'A new home screen: Focus',
+        description:
+          "Orbital's home screen now shows just one thing to work on right now, with a quiet look at what's next — plus a full-screen Focus Mode with a timer for actually doing the work.",
+      },
+      {
+        title: 'A dedicated Goals tab',
+        description:
+          'Every goal is now built from tasks — progress is measured by what you\'ve actually completed, not a manual guess.',
+      },
+      {
+        title: 'Goal deadlines',
+        description: "Give any goal a deadline and see it flagged if it slips past.",
+      },
+      {
+        title: 'Link goals to your Year Goal Tree',
+        description: 'Connect a goal straight to a bigger Year Goal without needing a milestone in between.',
+      },
+    ],
+  },
+  {
     version: '0.3',
     date: '2026-07-29',
     features: [
@@ -74,3 +98,13 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
 ];
+
+const SEEN_KEY = 'orbital.whatsnew.lastSeenVersion';
+
+export function hasUnseenChangelog(): boolean {
+  return localStorage.getItem(SEEN_KEY) !== CHANGELOG[0]?.version;
+}
+
+export function markChangelogSeen(): void {
+  localStorage.setItem(SEEN_KEY, CHANGELOG[0]?.version ?? '');
+}
