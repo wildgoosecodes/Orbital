@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { useGoals } from '../../hooks/useGoals';
+import { useGoals, type GoalWithItems } from '../../hooks/useGoals';
 import { useTasks } from '../../hooks/useTasks';
 import { useHabits, type HabitWithLogs } from '../../hooks/useHabits';
-import { useRoadmap, type GoalWithItems } from '../../hooks/useRoadmap';
 import type { Goal, GoalPeriodType, Task } from '../../types/database';
 import { computeGoalProgress } from '../../lib/goalProgress';
 import { expandCollapse, expandCollapseTransition, tapScale } from '../../lib/motion';
@@ -19,14 +18,10 @@ export default function GoalsView({ userId }: GoalsViewProps) {
   const { goals, loading: goalsLoading, error, addGoal, archiveGoal, updateProgress, removeGoal } = useGoals(userId);
   const { tasks, loading: tasksLoading, addTask } = useTasks(userId);
   const { habits, loading: habitsLoading } = useHabits(userId);
-  // Reused purely for the Year Goal id/title list to populate the link
-  // dropdown below — avoids a second fetch hook for the same data.
-  const { yearGoals } = useRoadmap(userId);
 
   const [goalTitle, setGoalTitle] = useState('');
   const [firstTaskTitle, setFirstTaskTitle] = useState('');
   const [periodType, setPeriodType] = useState<GoalPeriodType>('weekly');
-  const [yearGoalId, setYearGoalId] = useState('');
   const [deadline, setDeadline] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [addGoalError, setAddGoalError] = useState<string | null>(null);
@@ -49,17 +44,15 @@ export default function GoalsView({ userId }: GoalsViewProps) {
       list.push(habit);
       habitsByGoal.set(habit.goal_id, list);
     }
-    return goals
-      .filter((g) => !g.milestone_id)
-      .map((goal) => {
-        const goalTasks = tasksByGoal.get(goal.id) || [];
-        return {
-          ...goal,
-          progress: computeGoalProgress(goal, goalTasks),
-          tasks: goalTasks,
-          habits: habitsByGoal.get(goal.id) || [],
-        };
-      });
+    return goals.map((goal) => {
+      const goalTasks = tasksByGoal.get(goal.id) || [];
+      return {
+        ...goal,
+        progress: computeGoalProgress(goal, goalTasks),
+        tasks: goalTasks,
+        habits: habitsByGoal.get(goal.id) || [],
+      };
+    });
   }, [goals, tasks, habits]);
 
   const activeGoals = flatGoals.filter((g) => g.status !== 'completed');
@@ -75,18 +68,15 @@ export default function GoalsView({ userId }: GoalsViewProps) {
       createdGoal = await addGoal({
         title: goalTitle.trim(),
         period_type: periodType,
-        year_goal_id: yearGoalId || null,
         deadline: deadline || null,
       });
       await addTask({ title: firstTaskTitle.trim(), goal_id: createdGoal.id });
       setGoalTitle('');
       setFirstTaskTitle('');
-      setYearGoalId('');
       setDeadline('');
     } catch {
       if (createdGoal) {
-        // Same rollback as the Yearly Goal Tree's add-goal flow — never leave
-        // a goal with zero tasks around if the first-task insert fails.
+        // Never leave a goal with zero tasks around if the first-task insert fails.
         await removeGoal(createdGoal.id).catch(() => {});
       }
       setAddGoalError('Could not add the goal — please try again.');
@@ -174,20 +164,8 @@ export default function GoalsView({ userId }: GoalsViewProps) {
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
             aria-label="Deadline (optional)"
-            className="bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-          />
-          <select
-            value={yearGoalId}
-            onChange={(e) => setYearGoalId(e.target.value)}
             className="flex-1 bg-cosmic-surface-3 border border-cosmic-border rounded-lg px-3 py-2 text-sm text-orbital-text focus:outline-none focus:border-orbital-accent-1"
-          >
-            <option value="">No year goal</option>
-            {yearGoals.map((yg) => (
-              <option key={yg.id} value={yg.id}>
-                {yg.title}
-              </option>
-            ))}
-          </select>
+          />
           <motion.button
             whileTap={tapScale}
             type="submit"
@@ -201,7 +179,7 @@ export default function GoalsView({ userId }: GoalsViewProps) {
           <p className="text-xs text-rose-400">{addGoalError}</p>
         ) : (
           <p className="text-xs text-orbital-text-faint">
-            Every goal needs at least one task — its progress is measured by tasks completed. Optionally link it to a Year Goal to see it show up on the Yearly Goal Tree.
+            Every goal needs at least one task — its progress is measured by tasks completed.
           </p>
         )}
       </form>

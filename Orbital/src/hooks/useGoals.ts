@@ -1,12 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
-import type { Goal, GoalPeriodType } from '../types/database';
+import type { Goal, GoalPeriodType, Task } from '../types/database';
 import { computePeriodRange } from '../lib/goalPeriods';
+import type { HabitWithLogs } from './useHabits';
+
+export interface GoalWithItems extends Goal {
+  tasks: Task[];
+  habits: HabitWithLogs[];
+}
 
 export interface NewGoalInput {
   title: string;
   period_type: GoalPeriodType;
-  year_goal_id?: string | null;
   deadline?: string | null;
 }
 
@@ -41,7 +46,6 @@ export function useGoals(userId: string) {
           period_type: input.period_type,
           period_start: start,
           period_end: end,
-          year_goal_id: input.year_goal_id ?? null,
           deadline: input.deadline || null,
         })
         .select()

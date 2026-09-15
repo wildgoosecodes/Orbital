@@ -11,7 +11,7 @@ import LandingPage from './pages/LandingPage';
 import LoadingScreen from './components/loading/LoadingScreen';
 import UpdateToast from './components/UpdateToast';
 
-// Lazy-loaded: these pull in recharts, framer-motion, the roadmap tree, and the
+// Lazy-loaded: these pull in recharts, framer-motion, and the
 // AI chat panel — real weight that shouldn't ship in the bundle every visitor
 // to the public landing page downloads.
 const Dashboard = lazy(() => import('./pages/Dashboard'));

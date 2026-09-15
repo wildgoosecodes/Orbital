@@ -9,7 +9,6 @@ import TaskList from '../components/tasks/TaskList';
 import CalendarView from '../components/calendar/CalendarView';
 import HabitList from '../components/habits/HabitList';
 import GoalsView from '../components/goals/GoalsView';
-import RoadmapView from '../components/roadmap/RoadmapView';
 import FocusDashboard from '../components/focus/FocusDashboard';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
@@ -84,7 +83,7 @@ export default function Dashboard() {
                 <Route path="calendar" element={<CalendarView userId={userId} />} />
                 <Route path="habits" element={<HabitList userId={userId} />} />
                 <Route path="goals" element={<GoalsView userId={userId} />} />
-                <Route path="roadmap" element={<RoadmapView userId={userId} />} />
+                <Route path="roadmap" element={<Navigate to="/app/goals" replace />} />
               </Routes>
             </div>
           ) : (

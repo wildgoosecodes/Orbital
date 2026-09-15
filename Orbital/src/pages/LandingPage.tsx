@@ -1,6 +1,6 @@
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CalendarDays, CheckSquare, Globe, Map, MessageCircle, Sparkles } from 'lucide-react';
+import { CalendarDays, CheckSquare, Globe, MessageCircle, Sparkles, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import OrbitalMark from '../components/brand/OrbitalMark';
 import LoadingScreen from '../components/loading/LoadingScreen';
@@ -19,10 +19,10 @@ const FEATURES = [
     description: 'See everything due today, right alongside the rest of your plans.',
   },
   {
-    icon: Map,
+    icon: Target,
     color: 'bg-orbital-violet/10 text-orbital-violet',
-    title: 'Yearly Goal Tree',
-    description: 'Break a year goal into quarters, milestones, and tasks — and watch the whole tree fill in as you go.',
+    title: 'Goals',
+    description: 'Every goal is built from the tasks and habits that actually move it — progress that reflects what you\'ve done, not a guess.',
   },
   {
     icon: Sparkles,

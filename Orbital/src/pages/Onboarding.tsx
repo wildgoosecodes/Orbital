@@ -14,7 +14,7 @@ interface ChatMessage {
 }
 
 const GREETING =
-  "Hi, I'm Orbital 👋 I help you turn big goals into a roadmap you can actually follow — milestones, smaller goals, and the tasks that get you there.\n\nWhat do you want to have accomplished by the end of the year?";
+  "Hi, I'm Orbital 👋 I help you turn a big goal into a plan you'll actually follow — a clear target, and the tasks or habits that get you there.\n\nWhat's something you want to accomplish?";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -32,11 +32,11 @@ export default function Onboarding() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, sending]);
 
-  async function finishOnboarding() {
+  async function finishOnboarding(destination: '/app' | '/app/goals' = '/app') {
     try {
       await completeOnboarding();
     } finally {
-      navigate('/app', { replace: true });
+      navigate(destination, { replace: true });
     }
   }
 
@@ -81,7 +81,7 @@ export default function Onboarding() {
             <h1 className="text-xl font-bold tracking-wider text-orbital-text uppercase">Orbital</h1>
           </div>
           <button
-            onClick={finishOnboarding}
+            onClick={() => finishOnboarding()}
             className="text-xs font-semibold text-orbital-text-faint hover:text-orbital-text-muted border border-cosmic-border rounded-lg px-3 py-1.5"
           >
             Skip for now
@@ -131,10 +131,10 @@ export default function Onboarding() {
             {hasExchanged && !sending && (
               <div className="flex justify-start pt-2">
                 <button
-                  onClick={finishOnboarding}
+                  onClick={() => finishOnboarding('/app/goals')}
                   className="text-xs font-semibold text-orbital-accent-2 hover:text-orbital-accent-2/80 border border-orbital-accent-1/30 bg-orbital-accent-1/10 rounded-lg px-3 py-1.5"
                 >
-                  View my roadmap →
+                  View my goals →
                 </button>
               </div>
             )}

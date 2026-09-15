@@ -9,26 +9,32 @@ const MODEL = 'gemini-flash-latest';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const MAX_TOOL_ROUNDS = 6;
 
-const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, goals, roadmaps, and calendar events.
+const SYSTEM_PROMPT = `You are Orbital's assistant, embedded in a personal productivity dashboard for tasks, habits, goals, and calendar events.
 Be concise and conversational — this renders in a narrow chat panel, not a document.
 Use the tools to read the user's real data before answering questions about it; never guess at counts or status.
 When the user asks you to create, update, complete, or delete something, use the matching tool rather than just describing what you'd do.
-Dates are ISO strings (YYYY-MM-DD); event times are ISO datetimes (YYYY-MM-DDTHH:mm:ss). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
+Dates are ISO strings (YYYY-MM-DD); event and time-block times are ISO datetimes (YYYY-MM-DDTHH:mm:ss). Today's date is provided in the first system-turn context if relevant — infer "today"/"tomorrow" from it.
 If a request is ambiguous (e.g. which task they mean among several similar ones), ask a short clarifying question instead of guessing.
 
-Tasks vs Events: a Task is a to-do with just a due date, no specific time — use it for things to get done sometime that day. An Event has a specific start time (a meeting, appointment, or timed reminder) and an optional reminder that sends a push notification before it starts — use it whenever the user mentions a time ("at 3pm", "10am tomorrow") or asks to be reminded of something.
+Tasks vs Events vs Time Blocks: a Task is a to-do with just a due date, no specific time — use it for things to get done sometime that day. An Event has a specific start time and is for something externally fixed (a meeting, appointment, or timed reminder) with an optional reminder that sends a push notification before it starts — use it whenever the user mentions a time for something happening to or with them ("at 3pm", "10am tomorrow"). A Time Block is a scheduled slot the user works during themselves — use create_time_block (not create_event) when proposing or confirming a concrete work session (e.g. "block an hour tonight for your project"). Before proposing a specific time for a work session, call list_time_blocks for that day/window so you don't suggest a slot that's already committed.
 
-The roadmap is a hierarchy: Year Goal → Milestones → Goals (weekly/quarterly/yearly) → Tasks or Habits. Tasks are for one-off deliverables; Habits are for building consistency toward a goal. A Goal, Task, or Habit created without a link up the chain is disconnected from the user's plan — avoid that by default.
-When the user asks for planning help (e.g. "help me set my quarterly goals", "what should I work on", "break this down"), call list_roadmap first. Look for Year Goals/Milestones that have no quarterly Goals yet, or Goals with nothing under them, and propose a short numbered list of suggested quarterly Goals and/or Tasks/Habits to fill the gap. Ask the user to confirm (or say which ones) before creating anything beyond one obvious, explicitly-requested item.
-When you're helping the user figure out how to work toward a specific Goal, ask whether they want a one-off Task or an ongoing Habit for consistency, then create the matching item with goal_id set to that goal.
-When the user describes a broader ambition they want to achieve (e.g. "I want to get an internship by fall", "I want to run a marathon this year") rather than asking about their existing roadmap, call list_roadmap first to see if it already fits under an existing Year Goal or Milestone. Then propose a short structured plan covering the full chain down to concrete next steps: a Year Goal (only if nothing existing fits), 1-3 Milestones with rough target dates, 1-2 Goals under the nearest milestone, and 1-2 starter Tasks or a Habit under each of those goals. Present it as a numbered outline and ask the user to confirm before creating anything — once they confirm (or say which parts to build), create it top-down: create_year_goal (if needed), then create_milestone for each, then create_goal for each, then create_task/create_habit for the starter items, setting goal_id correctly at each step so the whole chain links together.
+Goals are flat (no year/quarter hierarchy) — each has a title, a period_type (weekly/quarterly/yearly, used only to compute a default review window), an optional deadline, and progress computed automatically from its linked Tasks/Habits. A Goal, Task, or Habit created without linking up via goal_id is disconnected from the user's plan — avoid that by default.
+When the user describes an ambition (e.g. "I want to get an internship by fall", "I want to run a marathon this year without burning out") or asks for planning help, reason through it using S.M.A.R.T. criteria before proposing anything — silently, then explain the relevant parts conversationally in your reply (never as a labeled S/M/A/R/T list or template):
+- Specific: pin down the exact tangible outcome, not a vague feeling.
+- Measurable: how will progress actually be tracked — task completion, habit consistency?
+- Actionable: what are the first 1-3 concrete things that move this forward?
+- Reasonable: calibrate against burnout — don't propose a pace a beginner can't sustain.
+- Time-bound: translate relative timing ("by fall", "this year") into a concrete deadline.
+Then propose a short plan: one flat Goal (with period_type and deadline), 1-3 starter Tasks and/or a Habit linked via goal_id, and — only if there's an obvious first concrete session worth scheduling — a Time Block for it. Present it as a numbered list and ask the user to confirm before creating anything beyond one obvious, explicitly-requested item.
+When helping the user work toward an existing Goal, ask whether they want a one-off Task or an ongoing Habit for consistency, then create the matching item with goal_id set to that goal.
 Never create more than one Goal, Task, or Habit in a single turn without the user first confirming a proposed plan (an explicit list they typed, or a plan you proposed and they approved).`;
 
-const ONBOARDING_SYSTEM_PROMPT = `You are Orbital, an AI assistant whose job is to turn a new user's year into a followable roadmap: one or more Year Goals, each broken into Milestones, each broken into smaller Goals, which then get broken into Tasks or Habits.
-This is the user's first conversation with you, right after signing up. Keep it short and warm — 3 to 6 conversational turns, not an interrogation. Ask one focused follow-up at a time (e.g. what's motivating this goal, or roughly when milestones should land) rather than a long list of questions.
-Once you have enough to work with (even a rough year goal is enough — don't demand excessive detail), use the tools to actually build the roadmap: call create_year_goal once, then create_milestone 2-4 times for that year goal (spaced sensibly across the year, using target_date), then create_goal 1-3 times per milestone for the first milestone or two (goals for later milestones can be added by the user later). Prefer fewer, meaningful milestones/goals over an exhaustive breakdown. You do not need to ask permission for this first layer — propose a sensible plan and build it; they can edit anything afterward.
-Then ask one more short question: for these first goals, would they rather work through concrete tasks, or build a daily/weekly habit for consistency? Based on their answer, create 1-2 starter Tasks (with due_date and goal_id set) or a Habit (with goal_id set) for each of those goals — only for what they actually confirm, don't create both for every goal by default.
-After that, send a brief closing message confirming it's ready and that they can see and adjust it on the Yearly Goal Tree tab.
+const ONBOARDING_SYSTEM_PROMPT = `You are Orbital, an AI assistant whose job is to turn a new user's first ambition into one real, workable Goal.
+This is the user's first conversation with you, right after signing up. Keep it short and warm — 3 to 6 conversational turns, not an interrogation. Ask one focused follow-up at a time (e.g. what's motivating this goal, or roughly when they want it done) rather than a long list of questions.
+Reason through it using S.M.A.R.T. criteria as you go (a specific outcome, how progress will be measured, that the pace is realistic and won't burn them out, a concrete deadline) — explain your thinking conversationally, never as a labeled list.
+Once you have enough to work with (even a rough ambition is enough — don't demand excessive detail), use create_goal to build one flat Goal with a sensible period_type and deadline. You do not need to ask permission for this first goal — propose it and build it; they can edit anything afterward.
+Then ask one more short question: would they rather work through concrete tasks, or build a daily/weekly habit for consistency? Based on their answer, create 1-2 starter Tasks (with due_date and goal_id set) or a Habit (with goal_id set) — only for what they actually confirm, don't create both by default.
+After that, send a brief closing message confirming it's ready and that they can see and adjust it on the Goals tab.
 Dates are ISO strings (YYYY-MM-DD). Today's date is provided below.`;
 
 const PERIOD_DAYS: Record<string, number> = { weekly: 7, quarterly: 90, yearly: 365 };
@@ -63,7 +69,7 @@ const tools: ToolDef[] = [
   },
   {
     name: 'create_task',
-    description: 'Create a new task, optionally linked to a roadmap goal via goal_id.',
+    description: 'Create a new task, optionally linked to a goal via goal_id.',
     input_schema: {
       type: 'object',
       properties: {
@@ -72,7 +78,7 @@ const tools: ToolDef[] = [
         priority: { type: 'string', enum: ['low', 'medium', 'high'] },
         due_date: { type: 'string', description: 'ISO date YYYY-MM-DD' },
         category: { type: 'string' },
-        goal_id: { type: 'string', description: 'Optional id of the roadmap goal this task ladders up to.' },
+        goal_id: { type: 'string', description: 'Optional id of the goal this task ladders up to.' },
         next_action: { type: 'string', description: 'Optional short, concrete next physical step for this task — shown when it becomes the user\'s current focus.' },
         estimated_minutes: { type: 'number', description: 'Optional suggested focus-session length in minutes.' },
       },
@@ -111,13 +117,13 @@ const tools: ToolDef[] = [
   },
   {
     name: 'create_habit',
-    description: 'Create a new habit to track. Pass goal_id to tie it to a roadmap goal the user is building consistency toward.',
+    description: 'Create a new habit to track. Pass goal_id to tie it to a goal the user is building consistency toward.',
     input_schema: {
       type: 'object',
       properties: {
         name: { type: 'string' },
         frequency: { type: 'string', enum: ['daily', 'weekly'] },
-        goal_id: { type: 'string', description: 'Optional id of the roadmap goal this habit ladders up to.' },
+        goal_id: { type: 'string', description: 'Optional id of the goal this habit ladders up to.' },
       },
       required: ['name', 'frequency'],
     },
@@ -141,19 +147,17 @@ const tools: ToolDef[] = [
   },
   {
     name: 'list_goals',
-    description: "List the user's goals (standalone and roadmap goals alike).",
+    description: "List the user's goals.",
     input_schema: { type: 'object', properties: {} },
   },
   {
     name: 'create_goal',
-    description: 'Create a new goal. The period start/end dates are computed automatically from period_type starting today. Pass milestone_id to place it under a roadmap milestone, or year_goal_id to link it straight to a Year Goal without a milestone (the modern, preferred way — surfaced on the dedicated Goals tab). Omit both for a standalone goal.',
+    description: 'Create a new flat goal. The period start/end dates are computed automatically from period_type starting today.',
     input_schema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
         period_type: { type: 'string', enum: ['weekly', 'quarterly', 'yearly'] },
-        milestone_id: { type: 'string', description: 'Optional id of the milestone this goal belongs to.' },
-        year_goal_id: { type: 'string', description: 'Optional id of a Year Goal this goal links directly to (skips Milestone).' },
         deadline: { type: 'string', description: 'Optional ISO date (YYYY-MM-DD) the goal is due by.' },
       },
       required: ['title', 'period_type'],
@@ -175,39 +179,6 @@ const tools: ToolDef[] = [
     name: 'delete_goal',
     description: 'Delete a goal permanently.',
     input_schema: { type: 'object', properties: { goal_id: { type: 'string' } }, required: ['goal_id'] },
-  },
-  {
-    name: 'list_roadmap',
-    description: "List the user's full roadmap: year goals with their nested milestones and goals.",
-    input_schema: { type: 'object', properties: {} },
-  },
-  {
-    name: 'create_year_goal',
-    description: 'Create a top-level year goal — the root of a roadmap.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        description: { type: 'string' },
-        year: { type: 'number' },
-      },
-      required: ['title', 'year'],
-    },
-  },
-  {
-    name: 'create_milestone',
-    description: 'Create a milestone under a year goal — a checkpoint on the way to it.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        year_goal_id: { type: 'string' },
-        title: { type: 'string' },
-        description: { type: 'string' },
-        target_date: { type: 'string', description: 'ISO date YYYY-MM-DD this milestone should be reached by.' },
-        position: { type: 'number', description: 'Order along the roadmap timeline, 0-based.' },
-      },
-      required: ['year_goal_id', 'title'],
-    },
   },
   {
     name: 'list_events',
@@ -261,6 +232,31 @@ const tools: ToolDef[] = [
     name: 'delete_event',
     description: 'Delete a calendar event permanently.',
     input_schema: { type: 'object', properties: { event_id: { type: 'string' } }, required: ['event_id'] },
+  },
+  {
+    name: 'list_time_blocks',
+    description: "List the user's day-planner time blocks, optionally within a date range. Call this before proposing a specific work-session time, so you don't suggest a slot that's already committed.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        from: { type: 'string', description: 'ISO datetime lower bound (inclusive), omit for no lower bound.' },
+        to: { type: 'string', description: 'ISO datetime upper bound (exclusive), omit for no upper bound.' },
+      },
+    },
+  },
+  {
+    name: 'create_time_block',
+    description: 'Schedule a time block on the day planner for a work session the user does themselves (e.g. focused time on a goal). Distinct from create_event, which is for externally-fixed appointments/meetings with reminders.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        category: { type: 'string' },
+        start_at: { type: 'string', description: 'ISO datetime, e.g. 2026-09-15T19:00:00' },
+        end_at: { type: 'string', description: 'ISO datetime.' },
+      },
+      required: ['title', 'start_at', 'end_at'],
+    },
   },
 ];
 
@@ -397,8 +393,6 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
           period_type: periodType,
           period_start: start.toISOString().slice(0, 10),
           period_end: end.toISOString().slice(0, 10),
-          milestone_id: input.milestone_id ?? null,
-          year_goal_id: input.year_goal_id ?? null,
           deadline: input.deadline ?? null,
         })
         .select()
@@ -422,73 +416,6 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
       const { error } = await supabase.from('goals').delete().eq('id', input.goal_id as string);
       if (error) throw error;
       return { deleted: true };
-    }
-    case 'list_roadmap': {
-      const [yearGoalsRes, milestonesRes, goalsRes] = await Promise.all([
-        supabase.from('year_goals').select('*').order('created_at', { ascending: false }),
-        supabase.from('milestones').select('*').order('position', { ascending: true }),
-        supabase.from('goals').select('*').order('created_at', { ascending: false }),
-      ]);
-      if (yearGoalsRes.error) throw yearGoalsRes.error;
-      if (milestonesRes.error) throw milestonesRes.error;
-      if (goalsRes.error) throw goalsRes.error;
-
-      const goalsByMilestone = new Map<string, unknown[]>();
-      const directGoalsByYearGoal = new Map<string, unknown[]>();
-      for (const goal of goalsRes.data) {
-        if (goal.milestone_id) {
-          const list = goalsByMilestone.get(goal.milestone_id) || [];
-          list.push(goal);
-          goalsByMilestone.set(goal.milestone_id, list);
-        } else if (goal.year_goal_id) {
-          // Linked straight to a Year Goal via the dedicated Goals tab, no milestone.
-          const list = directGoalsByYearGoal.get(goal.year_goal_id) || [];
-          list.push(goal);
-          directGoalsByYearGoal.set(goal.year_goal_id, list);
-        }
-      }
-      const milestonesByYearGoal = new Map<string, unknown[]>();
-      for (const milestone of milestonesRes.data) {
-        const withGoals = { ...milestone, goals: goalsByMilestone.get(milestone.id) || [] };
-        const list = milestonesByYearGoal.get(milestone.year_goal_id) || [];
-        list.push(withGoals);
-        milestonesByYearGoal.set(milestone.year_goal_id, list);
-      }
-      return yearGoalsRes.data.map((yg: { id: string }) => ({
-        ...yg,
-        milestones: milestonesByYearGoal.get(yg.id) || [],
-        direct_goals: directGoalsByYearGoal.get(yg.id) || [],
-      }));
-    }
-    case 'create_year_goal': {
-      const { data, error } = await supabase
-        .from('year_goals')
-        .insert({
-          user_id: userId,
-          title: input.title,
-          description: input.description ?? null,
-          year: input.year,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    }
-    case 'create_milestone': {
-      const { data, error } = await supabase
-        .from('milestones')
-        .insert({
-          user_id: userId,
-          year_goal_id: input.year_goal_id,
-          title: input.title,
-          description: input.description ?? null,
-          target_date: input.target_date ?? null,
-          position: input.position ?? 0,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
     }
     case 'list_events': {
       let query = supabase.from('events').select('*').order('start_at', { ascending: true });
@@ -532,6 +459,29 @@ async function runTool(supabase: SupabaseClient, userId: string, name: string, i
       const { error } = await supabase.from('events').delete().eq('id', input.event_id as string);
       if (error) throw error;
       return { deleted: true };
+    }
+    case 'list_time_blocks': {
+      let query = supabase.from('time_blocks').select('*').order('start_at', { ascending: true });
+      if (input.from) query = query.gte('start_at', input.from as string);
+      if (input.to) query = query.lt('start_at', input.to as string);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    }
+    case 'create_time_block': {
+      const { data, error } = await supabase
+        .from('time_blocks')
+        .insert({
+          user_id: userId,
+          title: input.title,
+          category: input.category ?? null,
+          start_at: input.start_at,
+          end_at: input.end_at,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
     }
     default:
       throw new Error(`Unknown tool: ${name}`);

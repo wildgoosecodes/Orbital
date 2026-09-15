@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import type { GoalWithItems } from '../../hooks/useRoadmap';
+import type { GoalWithItems } from '../../hooks/useGoals';
 import type { NewTaskInput } from '../../hooks/useTasks';
 import { calculateStreak } from '../../lib/habitStreak';
 import { expandCollapse, expandCollapseTransition, tapScale } from '../../lib/motion';
