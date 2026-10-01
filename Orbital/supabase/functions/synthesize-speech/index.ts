@@ -6,7 +6,10 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 
 const TTS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
-const MODEL = 'gemini-3.8-flash-tts';
+// Each TTS model has its own daily request cap (Flash is 100/day on Tier 1),
+// so when the preferred model is capped, fall through to Lite — same voice,
+// separate quota — instead of dropping straight to the browser voice.
+const MODELS = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'];
 const VOICE = 'Achernar';
 const STYLE = 'calm, warm, unhurried — a steady, reassuring co-pilot';
 // Voice replies are 1–3 spoken sentences by design; this bounds per-request cost.
@@ -16,7 +19,7 @@ const MAX_CHARS = 600;
 // attempt isn't retried.
 const TTS_TIMEOUT_MS = 30_000;
 
-const RETRYABLE_STATUS = new Set([429, 503]);
+const MAX_ATTEMPTS_PER_MODEL = 3;
 
 function makeJson(cors: Record<string, string>) {
   return function json(body: unknown, status = 200) {
@@ -33,39 +36,47 @@ type TtsResponse = {
 
 async function synthesize(text: string): Promise<Uint8Array> {
   let lastError = '';
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
 
-    const res = await fetch(TTS_URL, {
-      method: 'POST',
-      signal: AbortSignal.timeout(TTS_TIMEOUT_MS),
-      headers: { 'x-goog-api-key': GEMINI_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        input: [
-          {
-            type: 'user_input',
-            content: [{ type: 'text', text, annotations: [{ type: 'speech_metadata', style: STYLE }] }],
-          },
-        ],
-        response_format: { type: 'audio' },
-        generation_config: { speech_config: [{ voice: VOICE }] },
-      }),
-    });
+      const res = await fetch(TTS_URL, {
+        method: 'POST',
+        signal: AbortSignal.timeout(TTS_TIMEOUT_MS),
+        headers: { 'x-goog-api-key': GEMINI_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          input: [
+            {
+              type: 'user_input',
+              content: [{ type: 'text', text, annotations: [{ type: 'speech_metadata', style: STYLE }] }],
+            },
+          ],
+          response_format: { type: 'audio' },
+          generation_config: { speech_config: [{ voice: VOICE }] },
+        }),
+      });
 
-    if (res.ok) {
-      const data = (await res.json()) as TtsResponse;
-      const audio = (data.steps ?? [])
-        .filter((s) => s.type === 'model_output')
-        .flatMap((s) => s.content ?? [])
-        .filter((c) => c.type === 'audio')
-        .pop();
-      if (!audio?.data) throw new Error('No audio returned');
-      return Uint8Array.from(atob(audio.data), (c) => c.charCodeAt(0));
+      if (res.ok) {
+        const data = (await res.json()) as TtsResponse;
+        const audio = (data.steps ?? [])
+          .filter((s) => s.type === 'model_output')
+          .flatMap((s) => s.content ?? [])
+          .filter((c) => c.type === 'audio')
+          .pop();
+        if (!audio?.data) throw new Error('No audio returned');
+        return Uint8Array.from(atob(audio.data), (c) => c.charCodeAt(0));
+      }
+
+      lastError = `Gemini API error ${res.status}: ${await res.text()}`;
+      // A cap won't lift by retrying the same model in a few seconds — move on to the next one.
+      if (res.status === 429) {
+        console.warn(`${model} is rate-limited, trying the next TTS model`);
+        break;
+      }
+      // 503 is transient overload: retry this model with backoff. Anything else is a real error.
+      if (res.status !== 503) throw new Error(lastError);
     }
-
-    lastError = `Gemini API error ${res.status}: ${await res.text()}`;
-    if (!RETRYABLE_STATUS.has(res.status)) throw new Error(lastError);
   }
   throw new Error(lastError);
 }

@@ -28,11 +28,28 @@ function getAudioContext(): AudioContext | null {
 // cutting off audio. Holding it here for the duration of playback prevents that.
 let activeUtterance: SpeechSynthesisUtterance | null = null;
 
+type NavigatorWithAudioSession = Navigator & { audioSession?: { type: string } };
+
+/** An iOS PWA installed to the home screen gets a different default audio
+ *  session category than a Safari tab, and both AudioContext and speechSynthesis
+ *  can go completely silent under it — with no error, nothing to catch, nothing
+ *  to fall back from. 'playback' (Safari/iOS 17+) tells the OS this is real,
+ *  user-facing audio that should route to the speaker. Safe no-op elsewhere. */
+function unlockAudioSession() {
+  try {
+    const session = (navigator as NavigatorWithAudioSession).audioSession;
+    if (session) session.type = 'playback';
+  } catch {
+    // Unsupported or restricted — nothing more to do here.
+  }
+}
+
 /** Must run synchronously inside the user's tap. iOS (and Chrome's autoplay
  *  policy) only let audio start within a user-activation window, but the reply
  *  plays several awaits later (mic, transcribe, chat) — so the AudioContext is
  *  resumed and speechSynthesis primed here, while the gesture is still active. */
 export function unlockAudio() {
+  unlockAudioSession();
   const ctx = getAudioContext();
   if (ctx) {
     if (ctx.state !== 'running') void ctx.resume();
