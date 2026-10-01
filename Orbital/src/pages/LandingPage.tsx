@@ -1,6 +1,6 @@
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CalendarDays, CheckSquare, Globe, MessageCircle, Sparkles, Target } from 'lucide-react';
+import { CalendarDays, CheckSquare, Globe, MessageCircle, Mic, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import OrbitalMark from '../components/brand/OrbitalMark';
 import OrbitalDemo from '../components/landing/OrbitalDemo';
@@ -26,10 +26,10 @@ const FEATURES = [
     description: 'Every goal is built from the tasks and habits that actually move it — progress that reflects what you\'ve done, not a guess.',
   },
   {
-    icon: Sparkles,
+    icon: Mic,
     color: 'bg-orbital-accent-1/10 text-orbital-accent-2',
-    title: 'AI Assistant',
-    description: 'Ask it to plan your quarter, add a task, or check your streaks — it only acts when you ask it to.',
+    title: 'Talk to Orbital',
+    description: "Say what's on your mind and Orbital answers out loud — it plans with you, checks your schedule, and only acts when you ask.",
   },
 ];
 
@@ -85,8 +85,8 @@ export default function LandingPage() {
             Turn one big goal into a plan you'll actually follow.
           </h1>
           <p className="mt-5 text-lg text-orbital-text-muted max-w-xl mx-auto">
-            Orbital breaks your year down into quarters, goals, tasks, and habits — with an AI assistant
-            that helps you plan and otherwise stays out of your way.
+            Just talk to Orbital. It turns what you want to get done into a clear goal and one next step — a calm
+            co-pilot that helps you focus instead of piling on more.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
