@@ -12,6 +12,32 @@ export interface ChangelogEntry {
 /** Newest first. Add a new entry here whenever a shipped batch of work is worth telling users about. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5',
+    date: '2026-10-01',
+    features: [
+      {
+        title: 'Talk to Orbital',
+        description:
+          'Tap "Just ask me anything" and talk. Orbital now answers in a real voice, comes alive while it listens and thinks, and you can tap to interrupt it any time.',
+      },
+      {
+        title: 'A calm co-pilot',
+        description:
+          "Orbital has a personality now — warm, steady, and direct. It helps you find the next step, and when something slips it adjusts the plan instead of judging it.",
+      },
+      {
+        title: 'Smarter planning',
+        description:
+          "Describe something you want to do and Orbital helps shape it into a clear, realistic goal with first steps — and checks your schedule before suggesting a time.",
+      },
+      {
+        title: 'Goals, simplified',
+        description:
+          "The Yearly Goal Tree is gone — every goal now lives in the Goals tab. Anything you'd built in the tree is still there.",
+      },
+    ],
+  },
+  {
     version: '0.4',
     date: '2026-09-05',
     features: [

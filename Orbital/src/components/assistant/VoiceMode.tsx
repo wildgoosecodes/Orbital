@@ -1,28 +1,43 @@
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Mic } from 'lucide-react';
-import { useVoiceAssistant } from '../../hooks/useVoiceAssistant';
-import type { ChatMessage } from '../../hooks/useAssistantChat';
+import { useVoiceAssistant, type VoiceStatus } from '../../hooks/useVoiceAssistant';
+import type { ChatMessage, SendMessageOptions } from '../../hooks/useAssistantChat';
+import OrbitalOrb, { type OrbState } from '../brand/OrbitalOrb';
 import { tapScale } from '../../lib/motion';
 
 interface VoiceModeProps {
   open: boolean;
   onClose: () => void;
   messages: ChatMessage[];
-  sendMessage: (text: string) => Promise<string | undefined>;
+  sendMessage: (text: string, options?: SendMessageOptions) => Promise<string | undefined>;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: 'Tap the mic to talk',
+const STATUS_LABEL: Record<VoiceStatus, string> = {
+  idle: 'Tap Orbital to talk',
   listening: 'Listening…',
-  transcribing: 'Transcribing…',
+  transcribing: 'Thinking…',
   thinking: 'Thinking…',
-  speaking: 'Speaking…',
-  error: 'Something went wrong',
+  preparing: 'Thinking…',
+  speaking: 'Speaking — tap to interrupt',
+  error: 'Something went wrong — tap to try again',
 };
 
+const ORB_STATE: Record<VoiceStatus, OrbState> = {
+  idle: 'idle',
+  listening: 'listening',
+  transcribing: 'thinking',
+  thinking: 'thinking',
+  preparing: 'thinking',
+  speaking: 'speaking',
+  error: 'idle',
+};
+
+// Mic and voice RMS rarely exceed ~0.15 — scale into the orb's 0–1 range.
+const LEVEL_GAIN = 6;
+
 export default function VoiceMode({ open, onClose, messages, sendMessage }: VoiceModeProps) {
-  const { status, micLevel, errorMessage, startRecording, stopRecording, reset } = useVoiceAssistant({ sendMessage });
+  const { status, micLevel, speakingLevel, errorMessage, startRecording, stopRecording, reset } = useVoiceAssistant({ sendMessage });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,12 +48,21 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const orbScale = 1 + Math.min(micLevel * 6, 0.6);
+  const busy = status === 'transcribing' || status === 'thinking';
+  const rawLevel = status === 'listening' ? micLevel : status === 'speaking' ? speakingLevel : 0;
+  const orbLevel = Math.min(1, rawLevel * LEVEL_GAIN);
 
   function handleOrbClick() {
     if (status === 'listening') stopRecording();
-    else if (status === 'idle' || status === 'error') startRecording();
+    else if (!busy) startRecording();
   }
+
+  const orbLabel =
+    status === 'listening'
+      ? 'Stop listening'
+      : status === 'speaking' || status === 'preparing'
+        ? 'Interrupt Orbital and talk'
+        : 'Start talking';
 
   return (
     <AnimatePresence>
@@ -52,7 +76,7 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
         >
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 pt-4 space-y-3 max-w-md w-full mx-auto">
             {messages.length === 0 && (
-              <p className="text-center text-sm text-orbital-text-faint mt-8">Tap the mic and say something.</p>
+              <p className="text-center text-sm text-orbital-text-faint mt-8">Tap Orbital and say what's on your mind.</p>
             )}
 
             {messages.map((m, i) => (
@@ -87,32 +111,17 @@ export default function VoiceMode({ open, onClose, messages, sendMessage }: Voic
             <motion.button
               whileTap={tapScale}
               onClick={handleOrbClick}
-              aria-label={status === 'listening' ? 'Stop listening' : 'Start talking'}
-              disabled={status === 'transcribing' || status === 'thinking' || status === 'speaking'}
-              className="relative w-32 h-32 rounded-full flex items-center justify-center transition-transform disabled:cursor-not-allowed"
-              style={{ transform: `scale(${status === 'listening' ? orbScale : 1})` }}
+              aria-label={orbLabel}
+              disabled={busy}
+              className="relative w-48 h-48 rounded-full flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-orbital-accent-2/60 disabled:cursor-wait"
             >
-              <span
-                className={`absolute inset-0 rounded-full transition-colors ${
-                  status === 'listening'
-                    ? 'bg-orbital-accent-1/30 animate-pulse'
-                    : status === 'thinking' || status === 'transcribing'
-                      ? 'bg-orbital-accent-1/20 animate-pulse'
-                      : status === 'speaking'
-                        ? 'bg-emerald-500/25 animate-pulse'
-                        : 'bg-cosmic-surface-2'
-                }`}
-              />
-              <span
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center ${
-                  status === 'error' ? 'bg-rose-600' : 'bg-orbital-accent-1'
-                }`}
-              >
-                <Mic size={28} className="text-orbital-text" strokeWidth={1.5} />
-              </span>
+              <OrbitalOrb state={ORB_STATE[status]} level={orbLevel} size={176} />
             </motion.button>
 
-            <p className="text-sm font-medium text-orbital-text-muted">{STATUS_LABEL[status]}</p>
+            <p className={`flex items-center gap-1.5 text-sm font-medium ${status === 'error' ? 'text-rose-400' : 'text-orbital-text-muted'}`}>
+              {status === 'idle' && <Mic size={14} strokeWidth={1.75} />}
+              {STATUS_LABEL[status]}
+            </p>
 
             <motion.button
               whileTap={tapScale}

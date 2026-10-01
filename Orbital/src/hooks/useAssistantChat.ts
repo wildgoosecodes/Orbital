@@ -11,6 +11,13 @@ export interface ChatMessage {
 // Gemini token cost) forever.
 const MAX_HISTORY_MESSAGES = 20;
 
+export type ChatChannel = 'text' | 'voice';
+
+export interface SendMessageOptions {
+  /** 'voice' asks the assistant for a short, spoken-style reply with no markdown. */
+  channel?: ChatChannel;
+}
+
 /** Single shared conversation — call this once per Dashboard, not once per
  *  AIAssistantPanel instance, so the desktop-sidebar and mobile-tab panels
  *  (both rendered simultaneously, just CSS-hidden depending on viewport)
@@ -24,7 +31,7 @@ export function useAssistantChat() {
    *  needs the reply directly to speak it, rather than reading it back out
    *  of `messages`, which wouldn't have re-rendered yet at the point this
    *  promise resolves. */
-  async function sendMessage(text: string): Promise<string | undefined> {
+  async function sendMessage(text: string, options: SendMessageOptions = {}): Promise<string | undefined> {
     const trimmed = text.trim();
     if (!trimmed || sending) return undefined;
 
@@ -35,7 +42,7 @@ export function useAssistantChat() {
 
     try {
       const { data, error: invokeError } = await supabase.functions.invoke('assistant-chat', {
-        body: { messages: nextMessages.slice(-MAX_HISTORY_MESSAGES) },
+        body: { messages: nextMessages.slice(-MAX_HISTORY_MESSAGES), channel: options.channel ?? 'text' },
       });
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);

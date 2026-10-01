@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CalendarDays, CheckSquare, Globe, MessageCircle, Sparkles, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import OrbitalMark from '../components/brand/OrbitalMark';
+import OrbitalDemo from '../components/landing/OrbitalDemo';
 import LoadingScreen from '../components/loading/LoadingScreen';
 
 const FEATURES = [
@@ -77,9 +78,10 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="relative max-w-3xl mx-auto text-center px-4 sm:px-6 pt-16 pb-20 sm:pt-24 sm:pb-28"
+          className="relative max-w-3xl mx-auto text-center px-4 sm:px-6 pt-10 pb-20 sm:pt-16 sm:pb-28"
         >
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-orbital-text">
+          <OrbitalDemo />
+          <h1 className="mt-4 text-4xl sm:text-6xl font-bold tracking-tight text-orbital-text">
             Turn one big goal into a plan you'll actually follow.
           </h1>
           <p className="mt-5 text-lg text-orbital-text-muted max-w-xl mx-auto">
