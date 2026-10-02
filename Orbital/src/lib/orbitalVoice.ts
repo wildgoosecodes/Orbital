@@ -6,6 +6,9 @@ import { supabase } from './supabaseClient';
 const CHUNK_MAX_CHARS = 250;
 const MAX_SPOKEN_CHARS = 1200;
 const LEVEL_INTERVAL_MS = 50;
+/** Window of the precomputed loudness envelope that drives the orb. */
+const ENVELOPE_STEP_S = 0.05;
+const PLAY_START_TIMEOUT_MS = 5000;
 
 /** Scaled by length so short chunks fail fast and long ones get room for the
  *  latency tail: ≈10.5s for a 60-char sentence, ≈18s for a full 250-char chunk. */
@@ -13,14 +16,47 @@ function chunkTimeoutMs(chunk: string): number {
   return 8000 + 40 * chunk.length;
 }
 
-let audioCtx: AudioContext | null = null;
+// Orbital's voice plays through one reused <audio> element, not Web Audio. On
+// iOS, Web Audio is muted by the silent switch and has played nothing at all in
+// home-screen PWAs, while media-element playback routes to the speaker and
+// coexists with mic capture (forcing the audio session to 'playback' instead
+// blocks getUserMedia). iOS only lets an element play without a tap once it has
+// played inside one — hence a single element, unlocked in unlockAudio().
+let voiceElement: HTMLAudioElement | null = null;
+let silentClipUrl: string | null = null;
 
-function getAudioContext(): AudioContext | null {
-  if (audioCtx) return audioCtx;
-  const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctor) return null;
-  audioCtx = new Ctor();
-  return audioCtx;
+function getVoiceElement(): HTMLAudioElement {
+  if (!voiceElement) {
+    voiceElement = new Audio();
+    voiceElement.preload = 'auto';
+  }
+  return voiceElement;
+}
+
+/** 0.1s of 16-bit mono silence as a WAV — just enough to play during the tap. */
+function getSilentClipUrl(): string {
+  if (silentClipUrl) return silentClipUrl;
+  const sampleRate = 24000;
+  const sampleCount = sampleRate / 10;
+  const view = new DataView(new ArrayBuffer(44 + sampleCount * 2));
+  const writeTag = (offset: number, tag: string) => {
+    for (let i = 0; i < tag.length; i++) view.setUint8(offset + i, tag.charCodeAt(i));
+  };
+  writeTag(0, 'RIFF');
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  writeTag(8, 'WAVE');
+  writeTag(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeTag(36, 'data');
+  view.setUint32(40, sampleCount * 2, true);
+  silentClipUrl = URL.createObjectURL(new Blob([view.buffer], { type: 'audio/wav' }));
+  return silentClipUrl;
 }
 
 // Safari/WebKit doesn't keep its own strong reference to a speaking utterance —
@@ -30,17 +66,12 @@ let activeUtterance: SpeechSynthesisUtterance | null = null;
 
 /** Must run synchronously inside the user's tap. iOS (and Chrome's autoplay
  *  policy) only let audio start within a user-activation window, but the reply
- *  plays several awaits later (mic, transcribe, chat) — so the AudioContext is
- *  resumed and speechSynthesis primed here, while the gesture is still active. */
+ *  plays several awaits later (mic, transcribe, chat) — so the voice element and
+ *  speechSynthesis are both played once here, while the gesture is still active. */
 export function unlockAudio() {
-  const ctx = getAudioContext();
-  if (ctx) {
-    if (ctx.state !== 'running') void ctx.resume();
-    const silent = ctx.createBufferSource();
-    silent.buffer = ctx.createBuffer(1, 1, 22050);
-    silent.connect(ctx.destination);
-    silent.start(0);
-  }
+  const element = getVoiceElement();
+  element.src = getSilentClipUrl();
+  element.play().catch(() => {});
   if (window.speechSynthesis) {
     const primer = new SpeechSynthesisUtterance(' ');
     primer.volume = 0;
@@ -129,20 +160,67 @@ export function chunkForSpeech(text: string): string[] {
   return chunks;
 }
 
-async function fetchSpeechBuffer(ctx: AudioContext, text: string, signal: AbortSignal, timeout: number): Promise<AudioBuffer> {
+interface SpeechClip {
+  blob: Blob;
+  /** Seconds; 0 if the WAV couldn't be parsed. */
+  duration: number;
+  /** RMS loudness per ENVELOPE_STEP_S window — the orb reads this in step with
+   *  playback, since a media element exposes no live level of its own. */
+  envelope: number[];
+}
+
+/** Reads duration and a loudness envelope straight from the WAV's PCM data
+ *  (the voice service returns 16-bit PCM). Anything unexpected yields an empty
+ *  envelope — the clip still plays, the orb just gets a synthetic pulse. */
+function analyseWav(bytes: ArrayBuffer): Pick<SpeechClip, 'duration' | 'envelope'> {
+  const view = new DataView(bytes);
+  const tag = (at: number) => String.fromCharCode(...new Uint8Array(bytes, at, 4));
+  if (view.byteLength < 12 || tag(0) !== 'RIFF' || tag(8) !== 'WAVE') return { duration: 0, envelope: [] };
+
+  let channels = 1;
+  let sampleRate = 0;
+  let bitsPerSample = 0;
+  let dataOffset = -1;
+  let dataSize = 0;
+  let offset = 12;
+  while (offset + 8 <= view.byteLength) {
+    const id = tag(offset);
+    const size = view.getUint32(offset + 4, true);
+    if (id === 'fmt ' && offset + 24 <= view.byteLength) {
+      channels = view.getUint16(offset + 10, true);
+      sampleRate = view.getUint32(offset + 12, true);
+      bitsPerSample = view.getUint16(offset + 22, true);
+    } else if (id === 'data') {
+      dataOffset = offset + 8;
+      dataSize = Math.min(size, view.byteLength - dataOffset);
+      break;
+    }
+    offset += 8 + size + (size % 2);
+  }
+  if (dataOffset < 0 || bitsPerSample !== 16 || !sampleRate || !channels) return { duration: 0, envelope: [] };
+
+  const frameCount = Math.floor(dataSize / (2 * channels));
+  const stepFrames = Math.max(1, Math.round(sampleRate * ENVELOPE_STEP_S));
+  const envelope: number[] = [];
+  for (let start = 0; start < frameCount; start += stepFrames) {
+    const end = Math.min(frameCount, start + stepFrames);
+    let sumSquares = 0;
+    for (let frame = start; frame < end; frame++) {
+      const sample = view.getInt16(dataOffset + frame * 2 * channels, true) / 32768;
+      sumSquares += sample * sample;
+    }
+    envelope.push(Math.sqrt(sumSquares / (end - start)));
+  }
+  return { duration: frameCount / sampleRate, envelope };
+}
+
+async function fetchSpeechClip(text: string, signal: AbortSignal, timeout: number): Promise<SpeechClip> {
   const { data, error } = await supabase.functions.invoke('synthesize-speech', { body: { text }, signal, timeout });
   if (error) throw error;
   if (!(data instanceof Blob)) throw new Error('Unexpected response from the voice service');
-  return ctx.decodeAudioData(await data.arrayBuffer());
-}
-
-/** A context iOS never unlocked stays suspended, and a source started on it
- *  never plays or fires `ended` — check up front rather than hang. */
-async function ensureRunning(ctx: AudioContext): Promise<boolean> {
-  if (ctx.state === 'running') return true;
-  await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 300))]);
-  // Re-read after the await — TS keeps the earlier narrowing, but resume() changes it.
-  return (ctx.state as AudioContextState) === 'running';
+  const bytes = await data.arrayBuffer();
+  // Re-typed as WAV: Safari won't play a blob labelled application/octet-stream.
+  return { blob: new Blob([bytes], { type: 'audio/wav' }), ...analyseWav(bytes) };
 }
 
 function speakWithBrowserVoice(text: string): Promise<void> {
@@ -185,8 +263,8 @@ export function speakAloud(rawText: string, { onStart, onLevel, onDone }: SpeakH
   const chunks = chunkForSpeech(limitSpokenLength(toSpeechText(rawText)));
   let stopped = false;
   let started = false;
-  let currentSource: AudioBufferSourceNode | null = null;
   let levelTimer: ReturnType<typeof setInterval> | null = null;
+  let abortPlayback: (() => void) | null = null;
 
   function markStarted() {
     if (started) return;
@@ -199,18 +277,11 @@ export function speakAloud(rawText: string, { onStart, onLevel, onDone }: SpeakH
     return () => {};
   }
 
-  const ctx = getAudioContext();
-  const analyser = ctx?.createAnalyser() ?? null;
-  if (ctx && analyser) {
-    analyser.fftSize = 1024;
-    analyser.connect(ctx.destination);
-  }
-
   // Request every chunk at once so later ones are usually ready before the
   // chunk ahead of them finishes playing. Aborted on stop() so an interrupted
   // reply doesn't keep paying for audio nobody will hear.
   const requests = new AbortController();
-  const pending = ctx ? chunks.map((chunk) => fetchSpeechBuffer(ctx, chunk, requests.signal, chunkTimeoutMs(chunk))) : [];
+  const pending = chunks.map((chunk) => fetchSpeechClip(chunk, requests.signal, chunkTimeoutMs(chunk)));
   pending.forEach((p) => p.catch(() => {}));
 
   // Once Orbital's voice fails for one chunk, the rest of the reply uses the
@@ -228,49 +299,86 @@ export function speakAloud(rawText: string, { onStart, onLevel, onDone }: SpeakH
     onLevel(0);
   }
 
-  function startMeasuredLevels(node: AnalyserNode) {
-    const samples = new Float32Array(node.fftSize);
-    levelTimer = setInterval(() => {
-      node.getFloatTimeDomainData(samples);
-      let sumSquares = 0;
-      for (let i = 0; i < samples.length; i++) sumSquares += samples[i] * samples[i];
-      onLevel(Math.sqrt(sumSquares / samples.length));
-    }, LEVEL_INTERVAL_MS);
-  }
-
   // The browser voice exposes no audio stream to measure, so the orb gets a
   // gentle synthetic pulse instead of going still.
   function startSyntheticLevels() {
-    const started = Date.now();
+    const startedAt = Date.now();
     levelTimer = setInterval(() => {
-      const t = (Date.now() - started) / 1000;
+      const t = (Date.now() - startedAt) / 1000;
       onLevel(0.04 + 0.05 * Math.abs(Math.sin(t * 6)));
     }, LEVEL_INTERVAL_MS);
   }
 
-  function playBuffer(context: AudioContext, node: AnalyserNode, buffer: AudioBuffer): Promise<void> {
+  function startEnvelopeLevels(element: HTMLAudioElement, envelope: number[]) {
+    if (envelope.length === 0) {
+      startSyntheticLevels();
+      return;
+    }
+    levelTimer = setInterval(() => {
+      onLevel(envelope[Math.floor(element.currentTime / ENVELOPE_STEP_S)] ?? 0);
+    }, LEVEL_INTERVAL_MS);
+  }
+
+  /** Resolves true once the clip has played through (or was stopped), false if
+   *  the element refused or failed to play it. */
+  function playClip(clip: SpeechClip): Promise<boolean> {
+    const element = getVoiceElement();
+    const url = URL.createObjectURL(clip.blob);
     return new Promise((resolve) => {
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(node);
-      // Backstop in case `ended` never fires (e.g. the context gets suspended mid-play).
-      const backstop = setTimeout(resolve, (buffer.duration + 1) * 1000);
-      source.onended = () => {
-        clearTimeout(backstop);
-        resolve();
+      let settled = false;
+      let backstop: ReturnType<typeof setTimeout> | null = null;
+      let startGuard: ReturnType<typeof setTimeout> | null = null;
+      const finish = (played: boolean) => {
+        if (settled) return;
+        settled = true;
+        if (backstop) clearTimeout(backstop);
+        if (startGuard) clearTimeout(startGuard);
+        element.removeEventListener('ended', onEnded);
+        element.removeEventListener('error', onError);
+        abortPlayback = null;
+        stopLevels();
+        URL.revokeObjectURL(url);
+        resolve(played);
       };
-      currentSource = source;
-      source.start();
+      const onEnded = () => finish(true);
+      const onError = () => finish(false);
+      abortPlayback = () => {
+        element.pause();
+        finish(true);
+      };
+      element.addEventListener('ended', onEnded);
+      element.addEventListener('error', onError);
+      element.src = url;
+      // iOS can leave play() pending indefinitely (e.g. during an audio
+      // interruption) — a local blob should start within milliseconds, so don't
+      // sit on "Thinking…" forever waiting for it.
+      startGuard = setTimeout(() => {
+        element.pause();
+        finish(false);
+      }, PLAY_START_TIMEOUT_MS);
+      element.play().then(
+        () => {
+          if (settled) return;
+          if (startGuard) clearTimeout(startGuard);
+          startGuard = null;
+          markStarted();
+          startEnvelopeLevels(element, clip.envelope);
+          // Backstop in case `ended` never fires (e.g. playback stalls).
+          const seconds = clip.duration || (Number.isFinite(element.duration) ? element.duration : 30);
+          backstop = setTimeout(() => finish(true), (seconds + 1.5) * 1000);
+        },
+        () => finish(false),
+      );
     });
   }
 
   void (async () => {
     for (let i = 0; i < chunks.length; i++) {
       if (stopped) return;
-      let buffer: AudioBuffer | null = null;
-      if (ctx && analyser && !degraded) {
+      let clip: SpeechClip | null = null;
+      if (!degraded) {
         try {
-          buffer = await pending[i];
+          clip = await pending[i];
         } catch (err) {
           if (stopped) return;
           console.error('Orbital voice unavailable, using the browser voice for the rest of this reply:', err);
@@ -279,25 +387,19 @@ export function speakAloud(rawText: string, { onStart, onLevel, onDone }: SpeakH
       }
       if (stopped) return;
 
-      let playable = false;
-      if (buffer && ctx) {
-        playable = await ensureRunning(ctx);
-        if (!playable) degrade();
+      if (clip) {
+        const played = await playClip(clip);
+        if (stopped) return;
+        if (played) continue;
+        console.error('Orbital voice could not play, using the browser voice for the rest of this reply');
+        degrade();
       }
-      if (stopped) return;
 
-      if (playable && buffer && ctx && analyser) {
-        markStarted();
-        startMeasuredLevels(analyser);
-        await playBuffer(ctx, analyser, buffer);
-      } else {
-        markStarted();
-        startSyntheticLevels();
-        await speakWithBrowserVoice(chunks[i]);
-      }
+      markStarted();
+      startSyntheticLevels();
+      await speakWithBrowserVoice(chunks[i]);
       stopLevels();
     }
-    analyser?.disconnect();
     if (!stopped) onDone();
   })();
 
@@ -305,15 +407,10 @@ export function speakAloud(rawText: string, { onStart, onLevel, onDone }: SpeakH
     if (stopped) return;
     stopped = true;
     requests.abort();
-    try {
-      currentSource?.stop();
-    } catch {
-      // Already stopped.
-    }
+    abortPlayback?.();
     window.speechSynthesis?.cancel();
     if (levelTimer) clearInterval(levelTimer);
     levelTimer = null;
-    analyser?.disconnect();
     onLevel(0);
   };
 }
